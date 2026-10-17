@@ -1207,7 +1207,7 @@ class RmRecipeDetail extends LitElement {
             ${(r.instructions || []).length ? (r.instructions || []).map((step, i) => {
               const done = this._completedSteps.has(i);
               return html`
-                <div class="wide-section-card wide-step-card ${done ? 'step-done' : ''}">
+                <div class="wide-section-card wide-step-card ${done ? 'step-done' : ''}" @click=${() => this._toggleStepComplete(i)}>
                   <span class="step-num ${done ? 'done' : ''}"
                     @click=${(e) => { e.stopPropagation(); this._toggleStepComplete(i); }}
                     title="${done ? msg('Mark incomplete') : msg('Mark complete')}"
@@ -1467,7 +1467,7 @@ class RmRecipeDetail extends LitElement {
         ${r.instructions.map((step, i) => {
           const done = this._completedSteps.has(i);
           return html`
-            <li class="step-item ${done ? 'step-done' : ''}">
+            <li class="step-item ${done ? 'step-done' : ''}" @click=${() => this._toggleStepComplete(i)}>
               <span class="step-num ${done ? 'done' : ''}"
                 @click=${(e) => { e.stopPropagation(); this._toggleStepComplete(i); }}
                 title="${done ? msg('Mark incomplete') : msg('Mark complete')}"
@@ -2484,6 +2484,7 @@ class RmRecipeDetail extends LitElement {
       text-decoration: line-through;
       text-decoration-color: var(--rm-border);
     }
+    .step-item, .wide-step-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .step-text { font-size: 15px; color: var(--rm-text, #e5e5ea); line-height: 1.7; transition: opacity 0.2s; }
 
     /* Timer chip in directions */
