@@ -142,6 +142,7 @@ class RmRecipeDetail extends LitElement {
     _metricMode:         { type: Boolean },
     _wakeActive:         { type: Boolean },
     _completedSteps:     { type: Object },  // Set of completed step indices
+    _doneIngredients:    { type: Object },  // Set of ingredient indices ticked off while cooking
     _editIngInput:        { type: String },
     _editStepInput:       { type: String },
     _nutritionExpanded:   { type: Boolean },
@@ -185,6 +186,7 @@ class RmRecipeDetail extends LitElement {
     this._metricMode = this.settings?.unitSystem === 'metric';
     this._wakeActive = false;
     this._completedSteps = new Set();
+    this._doneIngredients = new Set();
     this._editIngInput = '';
     this._editStepInput = '';
     this._nutritionExpanded = false;
@@ -255,6 +257,7 @@ class RmRecipeDetail extends LitElement {
         this._photoUrlInput = '';
         this._metricMode = this.settings?.unitSystem === 'metric';
         this._completedSteps = new Set();
+        this._doneIngredients = new Set();
       }
       this._slideIdx = 0;
       this._startSlideTimer();
@@ -1174,8 +1177,8 @@ class RmRecipeDetail extends LitElement {
                       const globalIdx = (r.ingredients || []).indexOf(ing);
                       const { amount, unit } = this._getDisplayAmount(ing);
                       return html`
-                        <li class="ingredient-item ${picking ? 'selectable' : ''}"
-                          @click=${picking ? () => this._toggleIngredient(globalIdx) : undefined}>
+                        <li class="ingredient-item ${picking ? 'selectable' : 'cookable'} ${!picking && this._doneIngredients.has(globalIdx) ? 'done' : ''}"
+                          @click=${picking ? () => this._toggleIngredient(globalIdx) : () => this._toggleIngredientDone(globalIdx)}>
                           ${picking ? html`
                             <span class="ing-check ${checkedSet?.has(globalIdx) ? 'checked' : ''}">
                               ${checkedSet?.has(globalIdx) ? html`<ha-icon icon="mdi:check"></ha-icon>` : ''}
@@ -1183,6 +1186,7 @@ class RmRecipeDetail extends LitElement {
                           ` : ''}
                           <span class="ing-amount">${amount} ${unit}</span>
                           <span class="ing-name">${ing.name}${ing.notes ? html` <em class="ing-notes">(${ing.notes})</em>` : ''}</span>
+                          ${!picking && this._doneIngredients.has(globalIdx) ? html`<ha-icon class="ing-done-icon" icon="mdi:check-circle"></ha-icon>` : ''}
                         </li>
                       `;
                     })}
@@ -1379,8 +1383,8 @@ class RmRecipeDetail extends LitElement {
             }
             const { amount, unit } = this._getDisplayAmount(ing);
             return html`
-              <li class="ingredient-item ${picking ? 'selectable' : ''}"
-                @click=${picking ? () => this._toggleIngredient(i) : undefined}>
+              <li class="ingredient-item ${picking ? 'selectable' : 'cookable'} ${!picking && this._doneIngredients.has(i) ? 'done' : ''}"
+                @click=${picking ? () => this._toggleIngredient(i) : () => this._toggleIngredientDone(i)}>
                 ${picking ? html`
                   <span class="ing-check ${checkedSet?.has(i) ? 'checked' : ''}">
                     ${checkedSet?.has(i) ? html`<ha-icon icon="mdi:check"></ha-icon>` : ''}
@@ -1388,6 +1392,7 @@ class RmRecipeDetail extends LitElement {
                 ` : ''}
                 <span class="ing-amount">${amount} ${unit}</span>
                 <span class="ing-name">${ing.name}${ing.notes ? html` <em class="ing-notes">(${ing.notes})</em>` : ''}</span>
+                ${!picking && this._doneIngredients.has(i) ? html`<ha-icon class="ing-done-icon" icon="mdi:check-circle"></ha-icon>` : ''}
               </li>
             `;
           })}
@@ -1437,6 +1442,13 @@ class RmRecipeDetail extends LitElement {
         `}
       </div>
     `;
+  }
+
+  _toggleIngredientDone(i) {
+    const next = new Set(this._doneIngredients);
+    if (next.has(i)) next.delete(i);
+    else next.add(i);
+    this._doneIngredients = next;
   }
 
   _toggleStepComplete(i) {
@@ -2357,6 +2369,12 @@ class RmRecipeDetail extends LitElement {
     }
     .ing-name { font-size: 15px; color: var(--rm-text, #e5e5ea); }
     .ing-notes { font-size: 13px; color: var(--rm-text-secondary, #8e8e93); font-style: italic; }
+
+    /* Tick off ingredients while cooking */
+    .ingredient-item.cookable { cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .ingredient-item.done .ing-amount,
+    .ingredient-item.done .ing-name { opacity: 0.4; text-decoration: line-through; }
+    .ing-done-icon { --mdc-icon-size: 20px; color: var(--success-color, #4caf50); margin-left: auto; align-self: center; flex-shrink: 0; }
 
     /* Ingredient checkbox selection */
     .ingredient-item.selectable { cursor: pointer; border-radius: 6px; padding-left: 4px; }
