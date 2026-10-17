@@ -4,6 +4,7 @@
 import { LitElement, html, css } from 'lit';
 import { msg, str } from '@lit/localize';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { scaleAmountString, computeTotal, formatTotal, parseAmount, amountValue, formatNumber } from '../utils/amounts.js';
 import { acquire as acquireWakeLock, release as releaseWakeLock, isWakeLockSupported, onChange as onWakeLockChange } from '../services/wake-lock.js';
 
 const WAKE_LOCK_REASON = 'recipe-detail';
@@ -101,8 +102,8 @@ const IMPERIAL_TO_METRIC = {
 
 function convertToMetric(amount, unit) {
   if (!amount || !unit) return null;
-  const num = parseFloat(amount);
-  if (isNaN(num)) return null;
+  const num = amountValue(amount);
+  if (num === null || isNaN(num)) return null;
   const key = unit.toLowerCase().trim();
   const conv = IMPERIAL_TO_METRIC[key];
   if (!conv) return null;
@@ -128,6 +129,7 @@ class RmRecipeDetail extends LitElement {
     _editing:            { type: Boolean },
     _editData:           { type: Object },
     _servingMult:        { type: Number },
+    _editingTotal:       { type: Boolean },
     _activeTab:          { type: String },  // 'ingredients'|'directions'|'notes'|'nutrition'|'photos'
     _showShoppingPicker: { type: Boolean },
     _selectedListId:     { type: String },
@@ -172,6 +174,7 @@ class RmRecipeDetail extends LitElement {
     this._editing = false;
     this._editData = {};
     this._servingMult = 1;
+    this._editingTotal = false;
     this._activeTab = 'ingredients';
     this._showShoppingPicker = false;
     this._selectedListId = '';
@@ -247,6 +250,7 @@ class RmRecipeDetail extends LitElement {
       const prev = changedProps.get('recipe');
       const differentRecipe = !prev || prev.id !== this.recipe.id;
       this._servingMult = 1;
+      this._editingTotal = false;
       if (differentRecipe) {
         this._editing = false;
         this._confirmDelete = false;
@@ -286,9 +290,37 @@ class RmRecipeDetail extends LitElement {
   }
 
   _scaleAmount(amount) {
-    if (!amount || isNaN(parseFloat(amount))) return amount;
-    const scaled = parseFloat(amount) * this._servingMult;
-    return Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(1).replace(/\.0$/, '');
+    return scaleAmountString(amount, this._servingMult);
+  }
+
+  // Total amount (sum of all g/ml ingredients). Shown/editable when the recipe is
+  // clearly weight/volume based (e.g. ice cream, sauces), or its servings text says so.
+  _baseTotal() {
+    const r = this.recipe;
+    const t = computeTotal(r?.ingredients);
+    if (!t) return null;
+    const flagged = /^\s*(gesamt|total|yield|ergibt|menge)/i.test(r.servings_text || '');
+    if (!flagged && t.share < 0.8) return null;
+    return t;
+  }
+
+  _startTotalEdit() {
+    this._editingTotal = true;
+    this.updateComplete.then(() => {
+      const el = this.shadowRoot?.querySelector('.total-input');
+      if (el) { el.focus(); el.select(); }
+    });
+  }
+
+  _commitTotal(e) {
+    const base = this._baseTotal();
+    this._editingTotal = false;
+    if (!base) return;
+    const p = parseAmount(e.target.value);
+    const val = p ? p.values[0] : null;
+    if (!val || val <= 0) return;
+    const mult = val / base.total;
+    this._servingMult = Math.min(100, Math.max(0.01, mult));
   }
 
   // -- Actions ------------------------------------------------------------------
@@ -1036,7 +1068,9 @@ class RmRecipeDetail extends LitElement {
 
   _renderScaler() {
     const r = this.recipe;
-    if (!r?.servings) return '';
+    const base = this._baseTotal();
+    if (!r?.servings && !base) return '';
+    const mult = Math.round(this._servingMult * 100) / 100;
     return html`
       <div class="scaler-row">
         <ha-icon class="scaler-icon" icon="mdi:silverware-fork-knife"></ha-icon>
@@ -1044,11 +1078,29 @@ class RmRecipeDetail extends LitElement {
           <button class="scaler-btn" @click=${() => { if (this._servingMult > 0.25) this._servingMult = Math.round((this._servingMult - 0.25) * 4) / 4; }}>
             <ha-icon icon="mdi:minus"></ha-icon>
           </button>
-          <span class="scaler-val">×${this._servingMult}</span>
+          <span class="scaler-val">×${formatNumber(mult, false)}</span>
           <button class="scaler-btn" @click=${() => { this._servingMult = Math.round((this._servingMult + 0.25) * 4) / 4; }}>
             <ha-icon icon="mdi:plus"></ha-icon>
           </button>
         </div>
+        ${base ? (this._editingTotal ? html`
+          <span class="total-edit">
+            <input class="total-input" type="text" inputmode="decimal"
+              .value=${String(Math.round(base.total * this._servingMult))}
+              @keydown=${(e) => {
+                if (e.key === 'Enter') e.target.blur();
+                else if (e.key === 'Escape') { e.target.dataset.cancel = '1'; e.target.blur(); }
+              }}
+              @blur=${(e) => { if (e.target.dataset.cancel) this._editingTotal = false; else this._commitTotal(e); }} />
+            <span class="total-unit">${base.unit}</span>
+          </span>
+        ` : html`
+          <button class="total-chip" @click=${() => this._startTotalEdit()}
+            title="${msg('Edit')}">
+            ${msg('Total')} ≈ ${formatTotal(base.total * this._servingMult, base.unit)}
+            <ha-icon icon="mdi:pencil-outline"></ha-icon>
+          </button>
+        `) : ''}
       </div>
     `;
   }
@@ -2259,6 +2311,21 @@ class RmRecipeDetail extends LitElement {
     }
     .scaler-btn:hover { background: var(--rm-accent-soft); color: var(--rm-accent); border-color: var(--rm-accent); }
     .scaler-btn ha-icon { --mdc-icon-size: 18px; }
+    .total-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--rm-accent-soft); color: var(--rm-accent);
+      border: 1px solid var(--rm-accent); border-radius: 16px;
+      padding: 4px 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .total-chip ha-icon { --mdc-icon-size: 14px; }
+    .total-edit { display: inline-flex; align-items: center; gap: 4px; }
+    .total-input {
+      width: 72px; padding: 4px 8px; font-size: 14px; font-family: inherit;
+      background: var(--rm-surface, transparent); color: var(--rm-text, inherit);
+      border: 1px solid var(--rm-accent); border-radius: 8px;
+    }
+    .total-unit { font-size: 13px; color: var(--rm-text-secondary); }
+    .scaler-row { flex-wrap: wrap; }
     .scaler-val {
       font-size: 13px; font-weight: 600; color: var(--rm-text);
       min-width: 34px; height: 34px; text-align: center;
