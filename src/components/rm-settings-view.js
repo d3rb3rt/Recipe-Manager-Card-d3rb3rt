@@ -190,7 +190,7 @@ class RmSettingsView extends LitElement {
         <div class="setting-row">
           <span class="setting-name">${msg('Text size')}</span>
           <div class="btn-group">
-            ${[['small', msg('S')], ['medium', msg('M')], ['large', msg('L')]].map(([val, lbl]) => html`
+            ${[['small', msg('S')], ['medium', msg('M')], ['large', msg('L')], ['xlarge', msg('XL')]].map(([val, lbl]) => html`
               <button class="seg-btn ${s.fontSize === val ? 'active' : ''}"
                 @click=${() => this._update({ fontSize: val })}>${lbl}</button>
             `)}

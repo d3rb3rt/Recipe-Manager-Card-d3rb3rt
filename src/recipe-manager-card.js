@@ -164,7 +164,7 @@ const THEME_VARS = {
   },
 };
 
-const FONT_SIZE_MAP = { small: '13px', medium: '15px', large: '17px' };
+const FONT_SIZE_MAP = { small: '13px', medium: '15px', large: '17px', xlarge: '20px' };
 
 function loadSettings() {
   try {
