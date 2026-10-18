@@ -164,6 +164,7 @@ const THEME_VARS = {
   },
 };
 
+const SETTINGS_REMOTE_KEY = 'recipe_manager_card_settings';
 const FONT_SIZE_MAP = { small: '13px', medium: '15px', large: '17px', xlarge: '20px' };
 
 function loadSettings() {
@@ -433,6 +434,10 @@ class RecipeManagerCard extends LitElement {
       saveSettings(this._settings);
       setActiveLocale(resolved);
     }
+    if (changedProps.has('hass') && this.hass && !this._remoteSettingsSynced) {
+      this._remoteSettingsSynced = true;
+      this._syncSettingsFromHA();
+    }
     if (changedProps.has('hass') && this._api) this._api.hass = this.hass;
     if (changedProps.has('_settings')) this._applyTheme();
     if (changedProps.has('_view') || changedProps.has('_selectedRecipe')) this._saveViewState();
@@ -627,10 +632,36 @@ class RecipeManagerCard extends LitElement {
 
   // -- Settings -------------------------------------------------------------
 
+  // Settings also live in HA's per-user frontend storage, so they survive
+  // clearing the browser/app cache (localStorage is only a fast local copy).
+  async _syncSettingsFromHA() {
+    try {
+      const res = await this.hass.callWS({ type: 'frontend/get_user_data', key: SETTINGS_REMOTE_KEY });
+      const remote = res?.value;
+      if (remote && typeof remote === 'object') {
+        this._languageAutoDetectPending = false;
+        const prevLanguage = this._settings.language;
+        this._settings = { ...DEFAULT_SETTINGS, ...remote };
+        saveSettings(this._settings);
+        if (this._settings.language !== prevLanguage) setActiveLocale(this._settings.language);
+      } else {
+        this._pushSettingsToHA();
+      }
+    } catch { /* offline or unsupported: keep local settings */ }
+  }
+
+  _pushSettingsToHA() {
+    try {
+      this.hass?.callWS({ type: 'frontend/set_user_data', key: SETTINGS_REMOTE_KEY, value: this._settings })
+        ?.catch(() => {});
+    } catch { /* ignore */ }
+  }
+
   _handleSettingsChange(e) {
     const prevLanguage = this._settings.language;
     this._settings = e.detail.settings;
     saveSettings(this._settings);
+    this._pushSettingsToHA();
     if (this._settings.language !== prevLanguage) {
       setActiveLocale(this._settings.language);
     }
