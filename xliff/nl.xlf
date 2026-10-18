@@ -9,8 +9,8 @@
   <source>Scraping failed.</source>
 <target>Ophalen mislukt.</target></trans-unit>
 <trans-unit id="s6eb0113ec2f58804">
-  <source>Could not open ZIP file: <x id="0" equiv-text="${zipErr.message}" /></source>
-<target>Kon ZIP-bestand niet openen:<x id="0" equiv-text="${zipErr.message}" /></target></trans-unit>
+  <source>Could not open ZIP file: <x id="0" equiv-text="${zipErr.message}"/></source>
+<target>Kon ZIP-bestand niet openen:<x id="0" equiv-text="${zipErr.message}"/></target></trans-unit>
 <trans-unit id="sbd4f00eb8325d8ab">
   <source>No HTML file found inside the ZIP — is this a valid Recipe Keeper export?</source>
 <target>Geen HTML-bestand gevonden in de ZIP — is dit een geldige Recipe Keeper-export?</target></trans-unit>
@@ -34,10 +34,10 @@
 <target>Recipe Keeper-import</target></trans-unit>
 <trans-unit id="h2524401dbaa32c2b">
   <source>Export your recipes from the Recipe Keeper app
-            (<x id="0" equiv-text="&lt;em&gt;" />Menu → Export → Recipe Keeper File<x id="1" equiv-text="&lt;/em&gt;" />), then select the
-            exported <x id="2" equiv-text="&lt;code&gt;" />.zip<x id="3" equiv-text="&lt;/code&gt;" /> file below. Recipe photos will be saved
+            (<x id="0" equiv-text="&lt;em&gt;"/>Menu → Export → Recipe Keeper File<x id="1" equiv-text="&lt;/em&gt;"/>), then select the
+            exported <x id="2" equiv-text="&lt;code&gt;"/>.zip<x id="3" equiv-text="&lt;/code&gt;"/> file below. Recipe photos will be saved
             locally if available.</source>
-<target>Exporteer je recepten uit de Recipe Keeper-app (<x id="0" equiv-text="&lt;em&gt;" />Menu → Exporteren → Recipe Keeper-bestand<x id="1" equiv-text="&lt;/em&gt;" />) en selecteer hieronder het geëxporteerde<x id="2" equiv-text="&lt;code&gt;" />.zip<x id="3" equiv-text="&lt;/code&gt;" />-bestand. Receptfoto's worden lokaal opgeslagen indien beschikbaar.</target></trans-unit>
+<target>Exporteer je recepten uit de Recipe Keeper-app (<x id="0" equiv-text="&lt;em&gt;"/>Menu → Exporteren → Recipe Keeper-bestand<x id="1" equiv-text="&lt;/em&gt;"/>) en selecteer hieronder het geëxporteerde<x id="2" equiv-text="&lt;code&gt;"/>.zip<x id="3" equiv-text="&lt;/code&gt;"/>-bestand. Receptfoto's worden lokaal opgeslagen indien beschikbaar.</target></trans-unit>
 <trans-unit id="sd4009850f9c531e1">
   <source>Choose .zip file…</source>
 <target>Kies .zip-bestand…</target></trans-unit>
@@ -45,14 +45,14 @@
   <source>Save recipe photos locally</source>
 <target>Receptfoto's lokaal opslaan</target></trans-unit>
 <trans-unit id="scf023cd4556297e3">
-  <source><x id="0" equiv-text="${this._importResult.imported}" /> recipe<x id="1" equiv-text="${this._importResult.imported !== 1 ? 's' : ''}" /> imported</source>
-<target><x id="0" equiv-text="${this._importResult.imported}" />recept<x id="1" equiv-text="${this._importResult.imported !== 1 ? 's' : ''}" />geïmporteerd</target></trans-unit>
+  <source><x id="0" equiv-text="${this._importResult.imported}"/> recipe<x id="1" equiv-text="${this._importResult.imported !== 1 ? 's' : ''}"/> imported</source>
+<target><x id="0" equiv-text="${this._importResult.imported}"/>recept<x id="1" equiv-text="${this._importResult.imported !== 1 ? 's' : ''}"/>geïmporteerd</target></trans-unit>
 <trans-unit id="sfdc8508b5a2d671f">
-  <source>with <x id="0" equiv-text="${this._importResult.imagesSaved}" /> photo<x id="1" equiv-text="${this._importResult.imagesSaved !== 1 ? 's' : ''}" /></source>
-<target>met<x id="0" equiv-text="${this._importResult.imagesSaved}" />foto<x id="1" equiv-text="${this._importResult.imagesSaved !== 1 ? 's' : ''}" /></target></trans-unit>
+  <source>with <x id="0" equiv-text="${this._importResult.imagesSaved}"/> photo<x id="1" equiv-text="${this._importResult.imagesSaved !== 1 ? 's' : ''}"/></source>
+<target>met<x id="0" equiv-text="${this._importResult.imagesSaved}"/>foto<x id="1" equiv-text="${this._importResult.imagesSaved !== 1 ? 's' : ''}"/></target></trans-unit>
 <trans-unit id="s210325e7d8ea04c1">
-  <source><x id="0" equiv-text="${this._importResult.failed}" /> failed — check HA logs for details</source>
-<target><x id="0" equiv-text="${this._importResult.failed}" />mislukt — controleer de HA-logboeken voor details</target></trans-unit>
+  <source><x id="0" equiv-text="${this._importResult.failed}"/> failed — check HA logs for details</source>
+<target><x id="0" equiv-text="${this._importResult.failed}"/>mislukt — controleer de HA-logboeken voor details</target></trans-unit>
 <trans-unit id="se7925be404867511">
   <source>Import failed</source>
 <target>Importeren mislukt</target></trans-unit>
@@ -111,8 +111,8 @@
   <source>e.g. "2 cups flour", "salt", or "# Section"</source>
 <target>bijv. "2 kopjes bloem", "zout", of "# Sectie"</target></trans-unit>
 <trans-unit id="h3518038de78dd829">
-  <source>Tip: Use <x id="0" equiv-text="&lt;code&gt;" />#Section Name<x id="1" equiv-text="&lt;/code&gt;" /> to add a section header. Or paste multiple lines at once:</source>
-<target>Tip: Gebruik<x id="0" equiv-text="&lt;code&gt;" />#Sectienaam<x id="1" equiv-text="&lt;/code&gt;" />om een sectiekop toe te voegen. Of plak meerdere regels tegelijk:</target></trans-unit>
+  <source>Tip: Use <x id="0" equiv-text="&lt;code&gt;"/>#Section Name<x id="1" equiv-text="&lt;/code&gt;"/> to add a section header. Or paste multiple lines at once:</source>
+<target>Tip: Gebruik<x id="0" equiv-text="&lt;code&gt;"/>#Sectienaam<x id="1" equiv-text="&lt;/code&gt;"/>om een sectiekop toe te voegen. Of plak meerdere regels tegelijk:</target></trans-unit>
 <trans-unit id="s2a6b0c01d26e7ce1">
   <source>Paste ingredients (one per line, use # for headers):</source>
 <target>Plak ingrediënten (één per regel, gebruik # voor kopjes):</target></trans-unit>
@@ -147,8 +147,8 @@
   <source>Snack</source>
 <target>Snack</target></trans-unit>
 <trans-unit id="se5784a16a6799dad">
-  <source>Back to <x id="0" equiv-text="${this.fromRecipe.name}" /></source>
-<target>Terug naar<x id="0" equiv-text="${this.fromRecipe.name}" /></target></trans-unit>
+  <source>Back to <x id="0" equiv-text="${this.fromRecipe.name}"/></source>
+<target>Terug naar<x id="0" equiv-text="${this.fromRecipe.name}"/></target></trans-unit>
 <trans-unit id="s1a7d1a91f4212c93">
   <source>This week</source>
 <target>Deze week</target></trans-unit>
@@ -162,8 +162,8 @@
   <source>Clear this week</source>
 <target>Deze week wissen</target></trans-unit>
 <trans-unit id="s820b6333ec24ea43">
-  <source>Add to <x id="0" equiv-text="${this._mealTypeLabel(target.mealType)}" /></source>
-<target>Toevoegen aan<x id="0" equiv-text="${this._mealTypeLabel(target.mealType)}" /></target></trans-unit>
+  <source>Add to <x id="0" equiv-text="${this._mealTypeLabel(target.mealType)}"/></source>
+<target>Toevoegen aan<x id="0" equiv-text="${this._mealTypeLabel(target.mealType)}"/></target></trans-unit>
 <trans-unit id="sc0b25c91cbb377f2">
   <source>Servings:</source>
 <target>Porties:</target></trans-unit>
@@ -201,23 +201,23 @@
   <source>Added Sugars</source>
 <target>Toegevoegde suikers</target></trans-unit>
 <trans-unit id="s44add38a493e53a5">
-  <source><x id="0" equiv-text="${minutes}" /> min</source>
-<target><x id="0" equiv-text="${minutes}" />min</target></trans-unit>
+  <source><x id="0" equiv-text="${minutes}"/> min</source>
+<target><x id="0" equiv-text="${minutes}"/>min</target></trans-unit>
 <trans-unit id="se70d5bb737ef7810">
-  <source><x id="0" equiv-text="${h}" />h <x id="1" equiv-text="${m}" />m</source>
-<target><x id="0" equiv-text="${h}" />u<x id="1" equiv-text="${m}" />min</target></trans-unit>
+  <source><x id="0" equiv-text="${h}"/>h <x id="1" equiv-text="${m}"/>m</source>
+<target><x id="0" equiv-text="${h}"/>u<x id="1" equiv-text="${m}"/>min</target></trans-unit>
 <trans-unit id="s087d3407b52accab">
-  <source><x id="0" equiv-text="${h}" />h</source>
-<target><x id="0" equiv-text="${h}" />u</target></trans-unit>
+  <source><x id="0" equiv-text="${h}"/>h</source>
+<target><x id="0" equiv-text="${h}"/>u</target></trans-unit>
 <trans-unit id="sea4f08110bb8f15d">
   <source>Remove</source>
 <target>Verwijderen</target></trans-unit>
 <trans-unit id="se7a2360e38fc5886">
-  <source>Add <x id="0" equiv-text="${label.toLowerCase()}" /></source>
-<target><x id="0" equiv-text="${label.toLowerCase()}" />toevoegen</target></trans-unit>
+  <source>Add <x id="0" equiv-text="${label.toLowerCase()}"/></source>
+<target><x id="0" equiv-text="${label.toLowerCase()}"/>toevoegen</target></trans-unit>
 <trans-unit id="s2fa18f7f24863393">
-  <source>New <x id="0" equiv-text="${label.toLowerCase()}" />…</source>
-<target>Nieuw(e)<x id="0" equiv-text="${label.toLowerCase()}" />…</target></trans-unit>
+  <source>New <x id="0" equiv-text="${label.toLowerCase()}"/>…</source>
+<target>Nieuw(e)<x id="0" equiv-text="${label.toLowerCase()}"/>…</target></trans-unit>
 <trans-unit id="sf9aee319a006c9b4">
   <source>Add</source>
 <target>Toevoegen</target></trans-unit>
@@ -231,11 +231,11 @@
   <source>Back</source>
 <target>Terug</target></trans-unit>
 <trans-unit id="s1b09ae206ea2b854">
-  <source>Confirm &amp; Add <x id="0" equiv-text="${review.length}" /></source>
-<target>Bevestigen &amp;<x id="0" equiv-text="${review.length}" />toevoegen</target></trans-unit>
+  <source>Confirm &amp; Add <x id="0" equiv-text="${review.length}"/></source>
+<target>Bevestigen &amp;<x id="0" equiv-text="${review.length}"/>toevoegen</target></trans-unit>
 <trans-unit id="s635ab3ed75a4b7d3">
-  <source><x id="0" equiv-text="${recipeName}" /> — <x id="1" equiv-text="${label}" /></source>
-<target><x id="0" equiv-text="${recipeName}" />—<x id="1" equiv-text="${label}" /></target></trans-unit>
+  <source><x id="0" equiv-text="${recipeName}"/> — <x id="1" equiv-text="${label}"/></source>
+<target><x id="0" equiv-text="${recipeName}"/>—<x id="1" equiv-text="${label}"/></target></trans-unit>
 <trans-unit id="sf3ff78cc329d3528">
   <source>Previous</source>
 <target>Vorige</target></trans-unit>
@@ -246,20 +246,20 @@
   <source>Course:</source>
 <target>Gang:</target></trans-unit>
 <trans-unit id="seb60c649bc75165f">
-  <source>Filter by course: <x id="0" equiv-text="${t}" /></source>
-<target>Filteren op gang:<x id="0" equiv-text="${t}" /></target></trans-unit>
+  <source>Filter by course: <x id="0" equiv-text="${t}"/></source>
+<target>Filteren op gang:<x id="0" equiv-text="${t}"/></target></trans-unit>
 <trans-unit id="s7c040c7071e65671">
   <source>Category:</source>
 <target>Categorie:</target></trans-unit>
 <trans-unit id="sb66ef26810503350">
-  <source>Filter by category: <x id="0" equiv-text="${t}" /></source>
-<target>Filteren op categorie:<x id="0" equiv-text="${t}" /></target></trans-unit>
+  <source>Filter by category: <x id="0" equiv-text="${t}"/></source>
+<target>Filteren op categorie:<x id="0" equiv-text="${t}"/></target></trans-unit>
 <trans-unit id="s3f5359ecd7d0e8b1">
   <source>Collection:</source>
 <target>Collectie:</target></trans-unit>
 <trans-unit id="sdb6ef976115543ac">
-  <source>Filter by collection: <x id="0" equiv-text="${t}" /></source>
-<target>Filteren op collectie:<x id="0" equiv-text="${t}" /></target></trans-unit>
+  <source>Filter by collection: <x id="0" equiv-text="${t}"/></source>
+<target>Filteren op collectie:<x id="0" equiv-text="${t}"/></target></trans-unit>
 <trans-unit id="scf8e7ff24f98b064">
   <source>Favourite</source>
 <target>Favoriet</target></trans-unit>
@@ -303,8 +303,8 @@
   <source>Clear All</source>
 <target>Alles wissen</target></trans-unit>
 <trans-unit id="s76402dc74efa459d">
-  <source>Add (<x id="0" equiv-text="${checkedCount}" />)</source>
-<target>Toevoegen (<x id="0" equiv-text="${checkedCount}" />)</target></trans-unit>
+  <source>Add (<x id="0" equiv-text="${checkedCount}"/>)</source>
+<target>Toevoegen (<x id="0" equiv-text="${checkedCount}"/>)</target></trans-unit>
 <trans-unit id="s92824558c363c56c">
   <source>Mark incomplete</source>
 <target>Markeren als niet voltooid</target></trans-unit>
@@ -360,8 +360,8 @@
   <source>Add to Shopping List</source>
 <target>Toevoegen aan boodschappenlijst</target></trans-unit>
 <trans-unit id="se0130f927b1c72d3">
-  <source>Start timer for <x id="0" equiv-text="${timeText}" /></source>
-<target>Timer starten voor<x id="0" equiv-text="${timeText}" /></target></trans-unit>
+  <source>Start timer for <x id="0" equiv-text="${timeText}"/></source>
+<target>Timer starten voor<x id="0" equiv-text="${timeText}"/></target></trans-unit>
 <trans-unit id="s7445550f2bfb2f2f">
   <source>No notes.</source>
 <target>Geen notities.</target></trans-unit>
@@ -369,8 +369,8 @@
   <source>No nutrition info. Add it via the edit panel.</source>
 <target>Geen voedingsinformatie. Voeg dit toe via het bewerkingspaneel.</target></trans-unit>
 <trans-unit id="s4bf6b833e6c9d411">
-  <source>Per serving (<x id="0" equiv-text="${r.servings_text || r.servings}" />)</source>
-<target>Per portie (<x id="0" equiv-text="${r.servings_text || r.servings}" />)</target></trans-unit>
+  <source>Per serving (<x id="0" equiv-text="${r.servings_text || r.servings}"/>)</source>
+<target>Per portie (<x id="0" equiv-text="${r.servings_text || r.servings}"/>)</target></trans-unit>
 <trans-unit id="sed96bf1c8bbd5850">
   <source>Per serving</source>
 <target>Per portie</target></trans-unit>
@@ -390,11 +390,11 @@
   <source>cals</source>
 <target>cal</target></trans-unit>
 <trans-unit id="s0b7b2feae3459936">
-  <source>Per <x id="0" equiv-text="${r.servings_text}" /></source>
-<target>Per<x id="0" equiv-text="${r.servings_text}" /></target></trans-unit>
+  <source>Per <x id="0" equiv-text="${r.servings_text}"/></source>
+<target>Per<x id="0" equiv-text="${r.servings_text}"/></target></trans-unit>
 <trans-unit id="sf8053976d96c5cc0">
-  <source>Per <x id="0" equiv-text="${r.servings}" /> serving<x id="1" equiv-text="${r.servings !== 1 ? 's' : ''}" /></source>
-<target>Per<x id="0" equiv-text="${r.servings}" />portie<x id="1" equiv-text="${r.servings !== 1 ? 's' : ''}" /></target></trans-unit>
+  <source>Per <x id="0" equiv-text="${r.servings}"/> serving<x id="1" equiv-text="${r.servings !== 1 ? 's' : ''}"/></source>
+<target>Per<x id="0" equiv-text="${r.servings}"/>portie<x id="1" equiv-text="${r.servings !== 1 ? 's' : ''}"/></target></trans-unit>
 <trans-unit id="sf647a577e8aceb0f">
   <source>Daily RDA Nutrition</source>
 <target>Dagelijkse ADH-voeding</target></trans-unit>
@@ -465,8 +465,8 @@
   <source>Tags</source>
 <target>Tags</target></trans-unit>
 <trans-unit id="s6c90d2e30c73a526">
-  <source>Ingredients (<x id="0" equiv-text="${(d.ingredients || []).length}" />)</source>
-<target>Ingrediënten (<x id="0" equiv-text="${(d.ingredients || []).length}" />)</target></trans-unit>
+  <source>Ingredients (<x id="0" equiv-text="${(d.ingredients || []).length}"/>)</source>
+<target>Ingrediënten (<x id="0" equiv-text="${(d.ingredients || []).length}"/>)</target></trans-unit>
 <trans-unit id="sc68b98f98e6b2d61">
   <source>Section header</source>
 <target>Sectiekop</target></trans-unit>
@@ -495,8 +495,8 @@
   <source>e.g. "2 cups flour" or "# Section Header"</source>
 <target>bijv. "2 kopjes bloem" of "# Sectiekop"</target></trans-unit>
 <trans-unit id="s547704c18ebeb20f">
-  <source>Directions (<x id="0" equiv-text="${(d.instructions || []).length}" /> steps)</source>
-<target>Bereiding (<x id="0" equiv-text="${(d.instructions || []).length}" />stappen)</target></trans-unit>
+  <source>Directions (<x id="0" equiv-text="${(d.instructions || []).length}"/> steps)</source>
+<target>Bereiding (<x id="0" equiv-text="${(d.instructions || []).length}"/>stappen)</target></trans-unit>
 <trans-unit id="se494e1ac59c138c1">
   <source>Type a step, press Enter to add…</source>
 <target>Typ een stap, druk op Enter om toe te voegen…</target></trans-unit>
@@ -555,14 +555,14 @@
   <source>All ratings</source>
 <target>Alle beoordelingen</target></trans-unit>
 <trans-unit id="sa5c51f79672308e0">
-  <source><x id="0" equiv-text="${'★'.repeat(n)}${'☆'.repeat(5 - n)} ${n}" />+</source>
-<target><x id="0" equiv-text="${'★'.repeat(n)}${'☆'.repeat(5 - n)} ${n}" />+</target></trans-unit>
+  <source><x id="0" equiv-text="${'★'.repeat(n)}${'☆'.repeat(5 - n)} ${n}"/>+</source>
+<target><x id="0" equiv-text="${'★'.repeat(n)}${'☆'.repeat(5 - n)} ${n}"/>+</target></trans-unit>
 <trans-unit id="s8a7bee24f1eeaff1">
   <source>Sort</source>
 <target>Sorteren</target></trans-unit>
 <trans-unit id="s270c64ae6a97d9f7">
-  <source><x id="0" equiv-text="${this._sortByRating ? '✓ ' : ''}" />Sort by rating</source>
-<target><x id="0" equiv-text="${this._sortByRating ? '✓ ' : ''}" />Sorteren op beoordeling</target></trans-unit>
+  <source><x id="0" equiv-text="${this._sortByRating ? '✓ ' : ''}"/>Sort by rating</source>
+<target><x id="0" equiv-text="${this._sortByRating ? '✓ ' : ''}"/>Sorteren op beoordeling</target></trans-unit>
 <trans-unit id="sccd01eb4561a207c">
   <source>Search recipes…</source>
 <target>Recepten zoeken…</target></trans-unit>
@@ -588,8 +588,8 @@
   <source>Filter/sort by rating</source>
 <target>Filteren/sorteren op beoordeling</target></trans-unit>
 <trans-unit id="s61979f754efe7ebb">
-  <source>⭐ <x id="0" equiv-text="${this._starFilter}" />+ stars</source>
-<target>⭐<x id="0" equiv-text="${this._starFilter}" />+ sterren</target></trans-unit>
+  <source>⭐ <x id="0" equiv-text="${this._starFilter}"/>+ stars</source>
+<target>⭐<x id="0" equiv-text="${this._starFilter}"/>+ sterren</target></trans-unit>
 <trans-unit id="sb6025b595600bbae">
   <source>Sorted by rating</source>
 <target>Gesorteerd op beoordeling</target></trans-unit>
@@ -600,8 +600,8 @@
   <source>No matching recipes</source>
 <target>Geen overeenkomende recepten</target></trans-unit>
 <trans-unit id="s11f736a30bf0316b">
-  <source>No recipes with <x id="0" equiv-text="${this._starFilter}" />+ stars</source>
-<target>Geen recepten met<x id="0" equiv-text="${this._starFilter}" />+ sterren</target></trans-unit>
+  <source>No recipes with <x id="0" equiv-text="${this._starFilter}"/>+ stars</source>
+<target>Geen recepten met<x id="0" equiv-text="${this._starFilter}"/>+ sterren</target></trans-unit>
 <trans-unit id="sdd6fbd3cd5ce597a">
   <source>No favourites yet — heart a recipe!</source>
 <target>Nog geen favorieten — markeer een recept met een hartje!</target></trans-unit>
@@ -855,14 +855,14 @@
   <source>Recipe Manager</source>
 <target>Recipe Manager</target></trans-unit>
 <trans-unit id="scbd4eac6319a49ff">
-  <source>Integration version <x id="0" equiv-text="${this._rmVersion}" /></source>
-<target>Integratieversie<x id="0" equiv-text="${this._rmVersion}" /></target></trans-unit>
+  <source>Integration version <x id="0" equiv-text="${this._rmVersion}"/></source>
+<target>Integratieversie<x id="0" equiv-text="${this._rmVersion}"/></target></trans-unit>
 <trans-unit id="s6c076f69234e73d6">
   <source>RM Card</source>
 <target>RM-kaart</target></trans-unit>
 <trans-unit id="s3a29c37958d1d189">
-  <source>Card version <x id="0" equiv-text="${this._rmcVersion}" /></source>
-<target>Kaartversie<x id="0" equiv-text="${this._rmcVersion}" /></target></trans-unit>
+  <source>Card version <x id="0" equiv-text="${this._rmcVersion}"/></source>
+<target>Kaartversie<x id="0" equiv-text="${this._rmcVersion}"/></target></trans-unit>
 <trans-unit id="s03618e2b9163caf9">
   <source>Refresh versions</source>
 <target>Versies vernieuwen</target></trans-unit>
@@ -894,20 +894,20 @@
   <source>Failed to load recipes</source>
 <target>Recepten laden mislukt</target></trans-unit>
 <trans-unit id="s90c11e6f683020f4">
-  <source><x id="0" equiv-text="${Math.floor(seconds / 60)}" /> min timer</source>
-<target><x id="0" equiv-text="${Math.floor(seconds / 60)}" />min timer</target></trans-unit>
+  <source><x id="0" equiv-text="${Math.floor(seconds / 60)}"/> min timer</source>
+<target><x id="0" equiv-text="${Math.floor(seconds / 60)}"/>min timer</target></trans-unit>
 <trans-unit id="s7d826f6eadbd1ff7">
-  <source>Set rating: <x id="0" equiv-text="${hover}" />★</source>
-<target>Beoordeling instellen:<x id="0" equiv-text="${hover}" />★</target></trans-unit>
+  <source>Set rating: <x id="0" equiv-text="${hover}"/>★</source>
+<target>Beoordeling instellen:<x id="0" equiv-text="${hover}"/>★</target></trans-unit>
 <trans-unit id="se57d555c0b80dc2c">
-  <source>Rating: <x id="0" equiv-text="${r}" />★ — click to change</source>
-<target>Beoordeling:<x id="0" equiv-text="${r}" />★ — klik om te wijzigen</target></trans-unit>
+  <source>Rating: <x id="0" equiv-text="${r}"/>★ — click to change</source>
+<target>Beoordeling:<x id="0" equiv-text="${r}"/>★ — klik om te wijzigen</target></trans-unit>
 <trans-unit id="sb65aa995ea9aa596">
   <source>Click to rate</source>
 <target>Klik om te beoordelen</target></trans-unit>
 <trans-unit id="s11c6d3aa1e29786f">
-  <source><x id="0" equiv-text="${label}" /> — coming soon</source>
-<target><x id="0" equiv-text="${label}" />— binnenkort</target></trans-unit>
+  <source><x id="0" equiv-text="${label}"/> — coming soon</source>
+<target><x id="0" equiv-text="${label}"/>— binnenkort</target></trans-unit>
 <trans-unit id="s7293d04c5979a8ad">
   <source>Expand sidebar</source>
 <target>Zijbalk uitklappen</target></trans-unit>
@@ -1067,6 +1067,12 @@
 <trans-unit id="sfb75e276e558684f">
   <source>Keep screen awake</source>
 <target>Scherm wakker houden</target></trans-unit>
+<trans-unit id="s69d657b5679e13e7">
+  <source>Tap again to confirm</source>
+<target>Tik nogmaals om te bevestigen</target></trans-unit>
+<trans-unit id="sed646a22b012fd7e">
+  <source>Save as new amount</source>
+<target>Opslaan als nieuwe hoeveelheid</target></trans-unit>
 </body>
 </file>
 </xliff>

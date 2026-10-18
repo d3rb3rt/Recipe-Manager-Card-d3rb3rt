@@ -130,6 +130,8 @@ class RmRecipeDetail extends LitElement {
     _editData:           { type: Object },
     _servingMult:        { type: Number },
     _editingTotal:       { type: Boolean },
+    _confirmSaveMult:    { type: Boolean },
+    _savingMult:         { type: Boolean },
     _activeTab:          { type: String },  // 'ingredients'|'directions'|'notes'|'nutrition'|'photos'
     _showShoppingPicker: { type: Boolean },
     _selectedListId:     { type: String },
@@ -175,6 +177,8 @@ class RmRecipeDetail extends LitElement {
     this._editData = {};
     this._servingMult = 1;
     this._editingTotal = false;
+    this._confirmSaveMult = false;
+    this._savingMult = false;
     this._activeTab = 'ingredients';
     this._showShoppingPicker = false;
     this._selectedListId = '';
@@ -246,11 +250,17 @@ class RmRecipeDetail extends LitElement {
   }
 
   updated(changedProps) {
+    if (changedProps.has('recipe') && !this.recipe) {
+      this._servingMult = 1;
+      this._editingTotal = false;
+      this._confirmSaveMult = false;
+    }
     if (changedProps.has('recipe') && this.recipe) {
       const prev = changedProps.get('recipe');
       const differentRecipe = !prev || prev.id !== this.recipe.id;
       this._servingMult = 1;
       this._editingTotal = false;
+      this._confirmSaveMult = false;
       if (differentRecipe) {
         this._editing = false;
         this._confirmDelete = false;
@@ -302,6 +312,60 @@ class RmRecipeDetail extends LitElement {
     const flagged = /^\s*(gesamt|total|yield|ergibt|menge)/i.test(r.servings_text || '');
     if (!flagged && t.share < 0.8) return null;
     return t;
+  }
+
+  // Text for the "Serves" box. For total-amount recipes ("Gesamtmenge ca. 780 g")
+  // show the live computed total so it always matches the total chip.
+  _servesText() {
+    const r = this.recipe;
+    const base = this._baseTotal();
+    const txt = r.servings_text || '';
+    if (base && /^\s*gesamt/i.test(txt)) {
+      const prefix = txt.replace(/\d[\s\S]*$/, '');
+      return `${prefix}${formatTotal(base.total * this._servingMult, base.unit)}`;
+    }
+    return txt || r.servings;
+  }
+
+  _onSaveMultClick() {
+    if (!this._confirmSaveMult) {
+      this._confirmSaveMult = true;
+      clearTimeout(this._confirmSaveTimer);
+      this._confirmSaveTimer = setTimeout(() => { this._confirmSaveMult = false; }, 4000);
+      return;
+    }
+    this._saveScaledRecipe();
+  }
+
+  // Persist the currently scaled amounts as the recipe's new amounts / serving size.
+  _saveScaledRecipe() {
+    const r = this.recipe;
+    const mult = this._servingMult;
+    if (!r || mult === 1) return;
+    clearTimeout(this._confirmSaveTimer);
+    const base = this._baseTotal();
+    const ingredients = (r.ingredients || []).map(ing => (
+      ing.is_heading || ing.name?.startsWith('#') || !ing.amount
+        ? ing
+        : { ...ing, amount: scaleAmountString(ing.amount, mult) }
+    ));
+    const data = { ingredients };
+    if (base && /^\s*gesamt/i.test(r.servings_text || '')) {
+      data.servings_text = this._servesText();
+    } else {
+      if (r.servings) data.servings = Math.max(1, Math.round(r.servings * mult));
+      const m = /^(\s*)(\d+(?:[.,]\d+)?)(.*)$/.exec(r.servings_text || '');
+      if (m) data.servings_text = `${m[1]}${scaleAmountString(m[2], mult)}${m[3]}`;
+    }
+    this._savingMult = true;
+    this._confirmSaveMult = false;
+    this.dispatchEvent(new CustomEvent('rm-update-recipe', {
+      detail: { recipeId: r.id, data },
+      bubbles: true,
+      composed: true,
+    }));
+    // The recipe prop is refreshed after the update, which resets the multiplier to ×1.
+    setTimeout(() => { this._savingMult = false; }, 1500);
   }
 
   _startTotalEdit() {
@@ -1002,7 +1066,7 @@ class RmRecipeDetail extends LitElement {
         ${r.servings ? html`
           <span class="meta-chip-icon">
             <ha-icon icon="mdi:silverware-fork-knife"></ha-icon>
-            ${r.servings_text || r.servings}
+            ${this._servesText()}
           </span>
         ` : ''}
         ${r.prep_time ? html`
@@ -1101,6 +1165,14 @@ class RmRecipeDetail extends LitElement {
             <ha-icon icon="mdi:pencil-outline"></ha-icon>
           </button>
         `) : ''}
+        ${mult !== 1 ? html`
+          <button class="save-mult-btn ${this._confirmSaveMult ? 'confirm' : ''}"
+            ?disabled=${this._savingMult}
+            @click=${() => this._onSaveMultClick()}>
+            <ha-icon icon="mdi:content-save-outline"></ha-icon>
+            ${this._confirmSaveMult ? msg('Tap again to confirm') : msg('Save as new amount')}
+          </button>
+        ` : ''}
       </div>
     `;
   }
@@ -1343,7 +1415,7 @@ class RmRecipeDetail extends LitElement {
               ${r.servings ? html`
                 <div class="meta-item">
                   <span class="meta-label">${msg('Serves')}</span>
-                  <span class="meta-val">${r.servings_text || r.servings}</span>
+                  <span class="meta-val">${this._servesText()}</span>
                 </div>
               ` : ''}
             </div>
@@ -2318,6 +2390,15 @@ class RmRecipeDetail extends LitElement {
       padding: 4px 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
     }
     .total-chip ha-icon { --mdc-icon-size: 14px; }
+    .save-mult-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: transparent; color: var(--rm-text, inherit);
+      border: 1px solid var(--rm-border, rgba(255,255,255,0.3)); border-radius: 16px;
+      padding: 4px 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .save-mult-btn.confirm { background: var(--rm-accent); color: #fff; border-color: var(--rm-accent); }
+    .save-mult-btn ha-icon { --mdc-icon-size: 14px; }
+    .save-mult-btn[disabled] { opacity: 0.5; cursor: default; }
     .total-edit { display: inline-flex; align-items: center; gap: 4px; }
     .total-input {
       width: 72px; padding: 4px 8px; font-size: 14px; font-family: inherit;

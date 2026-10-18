@@ -114,7 +114,8 @@ export function computeTotal(ingredients) {
 }
 
 export function formatTotal(total, unit) {
-  if (total >= 1000) {
+  total = Math.round(total);
+  if (total >= 10000) {
     const big = unit === 'ml' ? 'l' : 'kg';
     const v = total / 1000;
     return `${(Math.round(v * 100) / 100).toString().replace('.', ',')} ${big}`;
