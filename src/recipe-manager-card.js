@@ -336,7 +336,7 @@ class RecipeManagerCard extends LitElement {
     this._languageAutoDetectPending = !hasExplicitLanguage();
     setActiveLocale(this._settings.language);
     this._wide = false;
-    this._sidebarCollapsed = false;
+    this._sidebarCollapsed = true;
     this._gridScrollPos = 0;
     this._recentRecipeIds = loadRecentRecipes();
     this._timers = loadTimers();
