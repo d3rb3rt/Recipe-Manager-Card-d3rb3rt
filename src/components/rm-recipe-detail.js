@@ -1330,11 +1330,9 @@ class RmRecipeDetail extends LitElement {
             ${this._renderWakeLock()}
             ${(r.instructions || []).length ? this._directionItems(r).map((it) => {
               if (it.type === 'heading') {
-                return html`
-                  <div class="wide-section-card">
-                    <div class="dir-heading">${it.label}</div>
-                    ${this._renderDirIngredients(it.ings)}
-                  </div>`;
+                // Wide layout: the ingredient groups are already visible in the left column,
+                // so the heading is just a divider (no duplicated ingredient list).
+                return html`<div class="dir-divider">${it.label}</div>`;
               }
               const step = it.text;
               const i = it.i;
@@ -2672,6 +2670,10 @@ class RmRecipeDetail extends LitElement {
       color: var(--rm-accent, #ff6b35); margin-bottom: 6px;
     }
     .dir-ings { margin: 0 0 6px; }
+    .dir-divider {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--rm-accent, #ff6b35); margin: 10px 4px 0;
+    }
     .step-num {
       flex-shrink: 0;
       width: 30px;
