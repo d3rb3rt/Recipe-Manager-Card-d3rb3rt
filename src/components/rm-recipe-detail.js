@@ -1328,14 +1328,23 @@ class RmRecipeDetail extends LitElement {
           <div class="wide-dir-col">
             <div class="wide-dir-spacer"></div>
             ${this._renderWakeLock()}
-            ${(r.instructions || []).length ? (r.instructions || []).map((step, i) => {
+            ${(r.instructions || []).length ? this._directionItems(r).map((it) => {
+              if (it.type === 'heading') {
+                return html`
+                  <div class="wide-section-card">
+                    <div class="dir-heading">${it.label}</div>
+                    ${this._renderDirIngredients(it.ings)}
+                  </div>`;
+              }
+              const step = it.text;
+              const i = it.i;
               const done = this._completedSteps.has(i);
               return html`
                 <div class="wide-section-card wide-step-card ${done ? 'step-done' : ''}" @click=${() => this._toggleStepComplete(i)}>
                   <span class="step-num ${done ? 'done' : ''}"
                     @click=${(e) => { e.stopPropagation(); this._toggleStepComplete(i); }}
                     title="${done ? msg('Mark incomplete') : msg('Mark complete')}"
-                  >${done ? html`<ha-icon icon="mdi:check"></ha-icon>` : i + 1}</span>
+                  >${done ? html`<ha-icon icon="mdi:check"></ha-icon>` : it.num}</span>
                   <span class="step-text">${this._renderStepWithTimers(step)}</span>
                 </div>
               `;
@@ -1582,20 +1591,73 @@ class RmRecipeDetail extends LitElement {
     this._completedSteps = next;
   }
 
+  // A direction starting with '#' is a section heading (like '# Step 1'). The n-th
+  // heading in the directions belongs to the n-th ingredient group (the n-th ingredient
+  // heading), so its ingredients are shown right under it.
+  _directionItems(r) {
+    const groups = [];
+    (r.ingredients || []).forEach((ing, idx) => {
+      if (ing.is_heading || ing.name?.startsWith('#')) groups.push([]);
+      else if (groups.length) groups[groups.length - 1].push({ ing, idx });
+    });
+    const items = [];
+    let headingNo = 0;
+    let stepNo = 0;
+    (r.instructions || []).forEach((text, i) => {
+      if (typeof text === 'string' && text.trimStart().startsWith('#')) {
+        items.push({ type: 'heading', label: text.replace(/^\s*#+\s*/, ''), ings: groups[headingNo] || [], i });
+        headingNo++;
+      } else {
+        stepNo++;
+        items.push({ type: 'step', text, num: stepNo, i });
+      }
+    });
+    return items;
+  }
+
+  _renderDirIngredients(ings) {
+    if (!ings?.length) return '';
+    return html`
+      <ul class="ingredient-list dir-ings">
+        ${ings.map(({ ing, idx }) => {
+          const { amount, unit } = this._getDisplayAmount(ing);
+          const done = this._doneIngredients.has(idx);
+          return html`
+            <li class="ingredient-item cookable ${done ? 'done' : ''}"
+              @click=${(e) => { e.stopPropagation(); this._toggleIngredientDone(idx); }}>
+              <span class="ing-amount">${amount} ${unit}</span>
+              <span class="ing-name">${ing.name}${ing.notes ? html` <em class="ing-notes">(${ing.notes})</em>` : ''}</span>
+              ${done ? html`<ha-icon class="ing-done-icon" icon="mdi:check-circle"></ha-icon>` : ''}
+            </li>
+          `;
+        })}
+      </ul>
+    `;
+  }
+
   _renderDirections(r) {
     if (!r.instructions?.length) {
       return html`<p class="empty-tab">${msg('No directions listed.')}</p>`;
     }
     return html`
       <ol class="steps-list">
-        ${r.instructions.map((step, i) => {
+        ${this._directionItems(r).map((it) => {
+          if (it.type === 'heading') {
+            return html`
+              <li class="dir-heading-item">
+                <div class="dir-heading">${it.label}</div>
+                ${this._renderDirIngredients(it.ings)}
+              </li>`;
+          }
+          const step = it.text;
+          const i = it.i;
           const done = this._completedSteps.has(i);
           return html`
             <li class="step-item ${done ? 'step-done' : ''}" @click=${() => this._toggleStepComplete(i)}>
               <span class="step-num ${done ? 'done' : ''}"
                 @click=${(e) => { e.stopPropagation(); this._toggleStepComplete(i); }}
                 title="${done ? msg('Mark incomplete') : msg('Mark complete')}"
-              >${done ? html`<ha-icon icon="mdi:check"></ha-icon>` : i + 1}</span>
+              >${done ? html`<ha-icon icon="mdi:check"></ha-icon>` : it.num}</span>
               <span class="step-text">${this._renderStepWithTimers(step)}</span>
             </li>
           `;
@@ -2604,6 +2666,12 @@ class RmRecipeDetail extends LitElement {
       margin-bottom: 20px;
       align-items: flex-start;
     }
+    .dir-heading-item { margin: 4px 0 14px; }
+    .dir-heading {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--rm-accent, #ff6b35); margin-bottom: 6px;
+    }
+    .dir-ings { margin: 0 0 6px; }
     .step-num {
       flex-shrink: 0;
       width: 30px;
