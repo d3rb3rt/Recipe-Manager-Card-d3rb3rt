@@ -526,7 +526,7 @@ class RmSettingsView extends LitElement {
       display: flex; align-items: center; gap: 5px;
       background: none; border: none;
       border-bottom: 2px solid transparent;
-      padding: 10px 14px; font-size: 13px; font-weight: 500;
+      padding: 10px 14px; font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 500;
       color: var(--rm-text-secondary, #6b5c4a);
       cursor: pointer; white-space: nowrap;
       transition: color 0.15s, border-color 0.15s; flex-shrink: 0;
@@ -540,7 +540,7 @@ class RmSettingsView extends LitElement {
     .section { margin-bottom: 8px; }
 
     .section-label {
-      font-size: 11px; font-weight: 700;
+      font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 700;
       letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--rm-text-muted, #a08060); padding: 16px 20px 6px;
     }
@@ -552,12 +552,12 @@ class RmSettingsView extends LitElement {
     }
     .setting-row.muted-row { opacity: 0.5; }
 
-    .setting-name { font-size: 15px; font-weight: 500; flex-shrink: 0; color: var(--rm-text); }
+    .setting-name { font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 500; flex-shrink: 0; color: var(--rm-text); }
 
     .setting-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .setting-hint { font-size: 12px; color: var(--rm-text-muted, #a08060); }
+    .setting-hint { font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text-muted, #a08060); }
 
-    .muted-note { font-size: 13px; color: var(--rm-text-muted, #a08060); }
+    .muted-note { font-size: calc(13px * var(--rm-font-scale, 1)); color: var(--rm-text-muted, #a08060); }
 
     .backup-btn { min-width: 140px; white-space: nowrap; }
     .backup-btn.done    { background: var(--rm-success, #4caf50); color: #fff; }
@@ -581,7 +581,7 @@ class RmSettingsView extends LitElement {
     .theme-select {
       background: var(--rm-bg-surface, #fff); color: var(--rm-text, #2d2016);
       border: 1px solid var(--rm-border, rgba(0,0,0,0.12));
-      border-radius: 8px; padding: 6px 10px; font-size: 14px; cursor: pointer;
+      border-radius: 8px; padding: 6px 10px; font-size: calc(14px * var(--rm-font-scale, 1)); cursor: pointer;
       min-width: 160px; flex-shrink: 0;
     }
 
@@ -591,7 +591,7 @@ class RmSettingsView extends LitElement {
     }
     .seg-btn {
       background: transparent; border: none; padding: 6px 14px;
-      font-size: 13px; font-weight: 500; cursor: pointer;
+      font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 500; cursor: pointer;
       color: var(--rm-text-secondary, #6b5c4a);
       border-right: 1px solid var(--rm-border, rgba(0,0,0,0.1));
       transition: background 0.12s, color 0.12s;
@@ -620,7 +620,7 @@ class RmSettingsView extends LitElement {
     .file-label {
       display: flex; align-items: center; gap: 6px;
       background: var(--rm-bg-elevated); border: 1px solid var(--rm-border);
-      border-radius: 8px; padding: 6px 12px; font-size: 13px;
+      border-radius: 8px; padding: 6px 12px; font-size: calc(13px * var(--rm-font-scale, 1));
       color: var(--rm-text); cursor: pointer; transition: background 0.15s;
       flex-shrink: 0;
     }
@@ -634,8 +634,8 @@ class RmSettingsView extends LitElement {
       color: var(--rm-text-secondary); text-align: center;
     }
     .placeholder-tab ha-icon { --mdc-icon-size: 48px; opacity: 0.3; }
-    .placeholder-title { font-size: 18px; font-weight: 600; color: var(--rm-text); }
-    .placeholder-msg { font-size: 14px; max-width: 280px; line-height: 1.5; }
+    .placeholder-title { font-size: calc(18px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text); }
+    .placeholder-msg { font-size: calc(14px * var(--rm-font-scale, 1)); max-width: 280px; line-height: 1.5; }
   `;
 }
 

@@ -2241,21 +2241,21 @@ class RmRecipeDetail extends LitElement {
       scrollbar-width: thin; scrollbar-color: var(--rm-border) transparent;
     }
     .notes-section { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--rm-border); }
-    .notes-section h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--rm-text-secondary); }
+    .notes-section h3 { margin: 0 0 8px; font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--rm-text-secondary); }
 
     /* Recipe title */
     .recipe-title {
-      margin: 0 0 6px; font-size: 20px; font-weight: 700;
+      margin: 0 0 6px; font-size: calc(20px * var(--rm-font-scale, 1)); font-weight: 700;
       color: var(--rm-text); line-height: 1.2;
     }
-    .recipe-title.wide-centered { text-align: center; font-size: 22px; }
+    .recipe-title.wide-centered { text-align: center; font-size: calc(22px * var(--rm-font-scale, 1)); }
     .detail-desc.wide-centered { text-align: center; }
     .detail-right-header .quick-rating { justify-content: center; }
     .detail-right-header .action-btns-row { justify-content: center; }
 
     /* Quick rating */
     .quick-rating { display: flex; gap: 2px; margin: 0 0 8px; }
-    .qr-star { font-size: 20px; cursor: pointer; color: var(--rm-border); -webkit-text-stroke: 1px rgba(200,150,0,0.4); transition: color 0.15s; }
+    .qr-star { font-size: calc(20px * var(--rm-font-scale, 1)); cursor: pointer; color: var(--rm-border); -webkit-text-stroke: 1px rgba(200,150,0,0.4); transition: color 0.15s; }
     .qr-star.filled { color: #f5a623; -webkit-text-stroke: 1px #c47f0a; }
     .qr-star:hover { color: #f5a623; }
 
@@ -2266,7 +2266,7 @@ class RmRecipeDetail extends LitElement {
     .action-icon-btn {
       display: flex; flex-direction: column; align-items: center; gap: 5px;
       background: none; border: none; cursor: pointer;
-      color: var(--rm-text-secondary); font-size: 10px; font-weight: 600;
+      color: var(--rm-text-secondary); font-size: calc(10px * var(--rm-font-scale, 1)); font-weight: 600;
       transition: color 0.15s; text-decoration: none; width: 56px;
     }
     .action-icon-btn .btn-icon {
@@ -2288,7 +2288,7 @@ class RmRecipeDetail extends LitElement {
     .meta-chip-icon {
       display: inline-flex; align-items: center; gap: 6px;
       background: var(--rm-bg-elevated); border: 1px solid var(--rm-border);
-      border-radius: 20px; padding: 5px 12px; font-size: 12px;
+      border-radius: 20px; padding: 5px 12px; font-size: calc(12px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary); font-weight: 600;
     }
     .meta-chip-icon ha-icon { --mdc-icon-size: 14px; }
@@ -2364,7 +2364,7 @@ class RmRecipeDetail extends LitElement {
     .detail-head { margin-bottom: 12px; }
     .detail-desc {
       margin: 0 0 8px;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary, #8e8e93);
       line-height: 1.5;
     }
@@ -2384,8 +2384,8 @@ class RmRecipeDetail extends LitElement {
       padding: 6px 12px;
       min-width: 60px;
     }
-    .meta-label { font-size: 10px; color: var(--rm-text-secondary, #8e8e93); text-transform: uppercase; letter-spacing: 0.05em; }
-    .meta-val { font-size: 14px; font-weight: 600; color: var(--rm-text, #e5e5ea); }
+    .meta-label { font-size: calc(10px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-val { font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text, #e5e5ea); }
 
     .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
     .tag-chip {
@@ -2393,7 +2393,7 @@ class RmRecipeDetail extends LitElement {
       color: var(--rm-accent, #ff6b35);
       border-radius: 20px;
       padding: 3px 10px;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
     }
 
     /* Chip groups (courses, categories, collections) */
@@ -2405,7 +2405,7 @@ class RmRecipeDetail extends LitElement {
       margin-top: 5px;
     }
     .chip-group-label {
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary, #8e8e93);
       font-weight: 600;
       text-transform: uppercase;
@@ -2414,7 +2414,7 @@ class RmRecipeDetail extends LitElement {
     .chip {
       border-radius: 20px;
       padding: 3px 10px;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
       border: none;
       cursor: default;
     }
@@ -2447,28 +2447,28 @@ class RmRecipeDetail extends LitElement {
       display: inline-flex; align-items: center; gap: 6px;
       background: var(--rm-accent-soft); color: var(--rm-accent);
       border: 1px solid var(--rm-accent); border-radius: 16px;
-      padding: 4px 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      padding: 4px 10px; font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; cursor: pointer; font-family: inherit;
     }
     .total-chip ha-icon { --mdc-icon-size: 14px; }
     .save-mult-btn {
       display: inline-flex; align-items: center; gap: 6px;
       background: transparent; color: var(--rm-text, inherit);
       border: 1px solid var(--rm-border, rgba(255,255,255,0.3)); border-radius: 16px;
-      padding: 4px 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      padding: 4px 10px; font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; cursor: pointer; font-family: inherit;
     }
     .save-mult-btn.confirm { background: var(--rm-accent); color: #fff; border-color: var(--rm-accent); }
     .save-mult-btn ha-icon { --mdc-icon-size: 14px; }
     .save-mult-btn[disabled] { opacity: 0.5; cursor: default; }
     .total-edit { display: inline-flex; align-items: center; gap: 4px; }
     .total-input {
-      width: 72px; padding: 4px 8px; font-size: 14px; font-family: inherit;
+      width: 72px; padding: 4px 8px; font-size: calc(14px * var(--rm-font-scale, 1)); font-family: inherit;
       background: var(--rm-surface, transparent); color: var(--rm-text, inherit);
       border: 1px solid var(--rm-accent); border-radius: 8px;
     }
-    .total-unit { font-size: 13px; color: var(--rm-text-secondary); }
+    .total-unit { font-size: calc(13px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary); }
     .scaler-row { flex-wrap: wrap; }
     .scaler-val {
-      font-size: 13px; font-weight: 600; color: var(--rm-text);
+      font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text);
       min-width: 34px; height: 34px; text-align: center;
       display: flex; align-items: center; justify-content: center;
       background: var(--rm-bg-elevated); border: 1px solid var(--rm-border);
@@ -2491,7 +2491,7 @@ class RmRecipeDetail extends LitElement {
       border-bottom: 2px solid transparent;
       padding: 11px 14px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       font-weight: 600;
       color: var(--rm-text-secondary, #8e8e93);
       transition: color 0.15s, border-color 0.15s;
@@ -2512,7 +2512,7 @@ class RmRecipeDetail extends LitElement {
       display: inline-flex; align-items: center; gap: 5px;
       background: none; border: 1px solid var(--rm-border);
       border-radius: 20px; padding: 4px 12px;
-      font-size: 12px; cursor: pointer;
+      font-size: calc(12px * var(--rm-font-scale, 1)); cursor: pointer;
       color: var(--rm-text-secondary);
       transition: all 0.15s;
     }
@@ -2525,7 +2525,7 @@ class RmRecipeDetail extends LitElement {
       display: inline-flex; align-items: center; gap: 5px;
       border: 1px dashed var(--rm-border);
       border-radius: 20px; padding: 4px 12px;
-      font-size: 12px; color: var(--rm-text-muted); opacity: 0.8;
+      font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text-muted); opacity: 0.8;
     }
     .wakelock-unsupported ha-icon { --mdc-icon-size: 14px; }
 
@@ -2539,7 +2539,7 @@ class RmRecipeDetail extends LitElement {
       display: inline-flex; align-items: center; gap: 5px;
       background: none; border: 1px solid var(--rm-border);
       border-radius: 20px; padding: 4px 12px;
-      font-size: 12px; cursor: pointer;
+      font-size: calc(12px * var(--rm-font-scale, 1)); cursor: pointer;
       color: var(--rm-text-secondary);
       transition: all 0.15s;
     }
@@ -2552,7 +2552,7 @@ class RmRecipeDetail extends LitElement {
     /* Ingredient section heading */
     .ing-heading {
       list-style: none;
-      font-size: 11px; font-weight: 700;
+      font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.08em;
       color: var(--rm-accent); padding: 10px 0 4px;
       margin-top: 6px;
@@ -2569,14 +2569,14 @@ class RmRecipeDetail extends LitElement {
     }
     .ingredient-item:last-child { border-bottom: none; }
     .ing-amount {
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       font-weight: 700;
       color: var(--rm-accent, #ff6b35);
       min-width: 70px;
       flex-shrink: 0;
     }
-    .ing-name { font-size: 15px; color: var(--rm-text, #e5e5ea); }
-    .ing-notes { font-size: 13px; color: var(--rm-text-secondary, #8e8e93); font-style: italic; }
+    .ing-name { font-size: calc(15px * var(--rm-font-scale, 1)); color: var(--rm-text, #e5e5ea); }
+    .ing-notes { font-size: calc(13px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); font-style: italic; }
 
     /* Tick off ingredients while cooking */
     .ingredient-item.cookable { cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -2631,11 +2631,11 @@ class RmRecipeDetail extends LitElement {
       color: var(--rm-text-secondary, #8e8e93);
       padding: 4px 10px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
     }
     .picker-sel-btn:hover { background: var(--rm-accent-soft); color: var(--rm-text); }
     .picker-btns { display: flex; gap: 8px; justify-content: flex-end; }
-    .shopping-note { font-size: 12px; color: var(--rm-text-secondary, #8e8e93); }
+    .shopping-note { font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); }
     .list-select {
       flex: 1;
       background: var(--rm-bg-elevated, #2c2c2e);
@@ -2643,7 +2643,7 @@ class RmRecipeDetail extends LitElement {
       border-radius: 8px;
       color: var(--rm-text, #e5e5ea);
       padding: 8px 10px;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       min-width: 120px;
     }
     .shopping-success {
@@ -2651,7 +2651,7 @@ class RmRecipeDetail extends LitElement {
       align-items: center;
       gap: 8px;
       color: var(--success-color, #4caf50);
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       padding: 8px 0;
     }
     .shopping-success ha-icon { --mdc-icon-size: 20px; }
@@ -2666,12 +2666,12 @@ class RmRecipeDetail extends LitElement {
     }
     .dir-heading-item { margin: 4px 0 14px; }
     .dir-heading {
-      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--rm-accent, #ff6b35); margin-bottom: 6px;
     }
     .dir-ings { margin: 0 0 6px; }
     .dir-divider {
-      font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--rm-accent, #ff6b35); margin: 10px 4px 0;
     }
     .step-num {
@@ -2683,7 +2683,7 @@ class RmRecipeDetail extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: calc(13px * var(--rm-font-scale, 1));
       font-weight: 700;
       color: #fff;
       cursor: pointer;
@@ -2703,7 +2703,7 @@ class RmRecipeDetail extends LitElement {
       text-decoration-color: var(--rm-border);
     }
     .step-item, .wide-step-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .step-text { font-size: 15px; color: var(--rm-text, #e5e5ea); line-height: 1.7; transition: opacity 0.2s; }
+    .step-text { font-size: calc(15px * var(--rm-font-scale, 1)); color: var(--rm-text, #e5e5ea); line-height: 1.7; transition: opacity 0.2s; }
 
     /* Timer chip in directions */
     .time-chip {
@@ -2715,7 +2715,7 @@ class RmRecipeDetail extends LitElement {
       border: 1px solid var(--rm-accent, #ff6b35);
       border-radius: 12px;
       padding: 1px 7px;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s;
@@ -2725,13 +2725,13 @@ class RmRecipeDetail extends LitElement {
     .time-chip:hover { background: var(--rm-accent, #ff6b35); color: #fff; }
 
     /* Notes */
-    .notes-text { font-size: 14px; color: var(--rm-text, #e5e5ea); line-height: 1.6; }
+    .notes-text { font-size: calc(14px * var(--rm-font-scale, 1)); color: var(--rm-text, #e5e5ea); line-height: 1.6; }
     .empty-tab {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary, #8e8e93);
       text-align: center;
       padding: 20px 0;
@@ -2749,14 +2749,14 @@ class RmRecipeDetail extends LitElement {
       margin: 0 auto;
     }
     .nutr-header {
-      font-size: 28px;
+      font-size: calc(28px * var(--rm-font-scale, 1));
       font-weight: 900;
       color: var(--rm-text, #e5e5ea);
       line-height: 1;
       margin-bottom: 2px;
     }
     .nutr-sub {
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary, #8e8e93);
       margin-bottom: 6px;
     }
@@ -2767,13 +2767,13 @@ class RmRecipeDetail extends LitElement {
       justify-content: space-between;
       align-items: baseline;
       padding: 2px 0;
-      font-size: 13px;
+      font-size: calc(13px * var(--rm-font-scale, 1));
       color: var(--rm-text, #e5e5ea);
     }
-    .nutr-bold { font-weight: 700; font-size: 15px; }
-    .nutr-indent { padding-left: 14px; font-size: 12px; }
+    .nutr-bold { font-weight: 700; font-size: calc(15px * var(--rm-font-scale, 1)); }
+    .nutr-indent { padding-left: 14px; font-size: calc(12px * var(--rm-font-scale, 1)); }
     .nutr-val { font-weight: 600; white-space: nowrap; }
-    .nutr-val em { font-style: normal; font-size: 11px; color: var(--rm-text-secondary, #8e8e93); }
+    .nutr-val em { font-style: normal; font-size: calc(11px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); }
 
     /* Nutrition card */
     .nutr-card { display: flex; flex-direction: column; gap: 10px; }
@@ -2781,22 +2781,22 @@ class RmRecipeDetail extends LitElement {
     .nutr-ring-wrap { flex-shrink: 0; width: 90px; height: 90px; }
     .nutr-macro-cols { display: flex; gap: 10px; flex: 1; justify-content: space-around; }
     .nutr-macro-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .nutr-mcol-num { font-size: 17px; font-weight: 700; line-height: 1; }
-    .nutr-mcol-label { font-size: 11px; color: var(--rm-text-secondary); font-weight: 500; }
-    .nutr-mcol-pct { font-size: 10px; font-weight: 600; }
+    .nutr-mcol-num { font-size: calc(17px * var(--rm-font-scale, 1)); font-weight: 700; line-height: 1; }
+    .nutr-mcol-label { font-size: calc(11px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary); font-weight: 500; }
+    .nutr-mcol-pct { font-size: calc(10px * var(--rm-font-scale, 1)); font-weight: 600; }
     .nutr-serving-note {
-      font-size: 11px; color: var(--rm-text-muted); text-align: center; margin-top: -4px;
+      font-size: calc(11px * var(--rm-font-scale, 1)); color: var(--rm-text-muted); text-align: center; margin-top: -4px;
     }
     /* Daily RDA expandable */
     .nutr-rda-toggle {
       display: flex; align-items: center; gap: 6px;
       background: none; border: none; border-top: 1px solid var(--rm-border);
-      padding: 10px 0 0; cursor: pointer; color: var(--rm-text); font-size: 13px; font-weight: 600;
+      padding: 10px 0 0; cursor: pointer; color: var(--rm-text); font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600;
       width: 100%; text-align: left;
     }
     .nutr-rda-title { flex: 1; }
     .nutr-rda-count {
-      font-size: 12px; font-weight: 700; color: var(--rm-text-secondary);
+      font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; color: var(--rm-text-secondary);
       background: var(--rm-bg-elevated); border: 1px solid var(--rm-border);
       border-radius: 10px; padding: 1px 7px;
     }
@@ -2808,7 +2808,7 @@ class RmRecipeDetail extends LitElement {
       grid-template-rows: auto 4px;
       column-gap: 8px;
       row-gap: 4px;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
     }
     .nutr-rda-label { color: var(--rm-text-secondary); grid-column: 1; grid-row: 1; }
     .nutr-rda-val { color: var(--rm-text); font-weight: 600; grid-column: 2; grid-row: 1; white-space: nowrap; }
@@ -2839,7 +2839,7 @@ class RmRecipeDetail extends LitElement {
       left: 4px;
       background: var(--rm-accent, #ff6b35);
       color: #fff;
-      font-size: 10px;
+      font-size: calc(10px * var(--rm-font-scale, 1));
       font-weight: 700;
       padding: 2px 6px;
       border-radius: 4px;
@@ -2872,7 +2872,7 @@ class RmRecipeDetail extends LitElement {
       border-top: 1px solid var(--rm-border, rgba(255,255,255,0.08));
     }
     .photo-add-label {
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
@@ -2886,7 +2886,7 @@ class RmRecipeDetail extends LitElement {
       border-radius: 8px;
       color: var(--rm-text, #e5e5ea);
       padding: 8px 10px;
-      font-size: 13px;
+      font-size: calc(13px * var(--rm-font-scale, 1));
     }
     .photo-url-input:focus { outline: none; border-color: var(--rm-accent, #ff6b35); }
     .camera-btns {
@@ -2906,7 +2906,7 @@ class RmRecipeDetail extends LitElement {
       color: var(--rm-text, #e5e5ea);
       padding: 16px 8px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
       text-align: center;
       transition: background 0.15s, border-color 0.15s;
     }
@@ -2922,7 +2922,7 @@ class RmRecipeDetail extends LitElement {
       color: var(--rm-text, #e5e5ea);
       padding: 8px 14px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -2965,7 +2965,7 @@ class RmRecipeDetail extends LitElement {
       padding: 14px 16px;
       border-bottom: 1px solid var(--rm-border, rgba(255,255,255,0.08));
       font-weight: 600;
-      font-size: 16px;
+      font-size: calc(16px * var(--rm-font-scale, 1));
       color: var(--rm-text, #e5e5ea);
       flex-shrink: 0;
     }
@@ -2978,7 +2978,7 @@ class RmRecipeDetail extends LitElement {
       gap: 12px;
     }
     .edit-section-label {
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -2989,14 +2989,14 @@ class RmRecipeDetail extends LitElement {
     }
     .edit-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
     .edit-field { display: flex; flex-direction: column; gap: 4px; }
-    .edit-field label { font-size: 11px; color: var(--rm-text-secondary, #8e8e93); text-transform: uppercase; letter-spacing: 0.05em; }
+    .edit-field label { font-size: calc(11px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); text-transform: uppercase; letter-spacing: 0.05em; }
     .edit-field input, .edit-field textarea {
       background: var(--rm-bg-elevated, #2c2c2e);
       border: 1px solid var(--rm-border, rgba(255,255,255,0.12));
       border-radius: 8px;
       color: var(--rm-text, #e5e5ea);
       padding: 8px 10px;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       font-family: inherit;
       resize: vertical;
     }
@@ -3037,7 +3037,7 @@ class RmRecipeDetail extends LitElement {
       padding: 4px 0;
     }
     .edit-star {
-      font-size: 32px;
+      font-size: calc(32px * var(--rm-font-scale, 1));
       color: var(--rm-border, rgba(255,255,255,0.3));
       cursor: pointer;
       transition: color 0.12s;
@@ -3064,7 +3064,7 @@ class RmRecipeDetail extends LitElement {
     .edit-ing-list li, .edit-steps-list li {
       display: flex; align-items: flex-start; gap: 8px;
       padding: 5px 0; border-bottom: 1px solid var(--rm-border, rgba(255,255,255,0.06));
-      font-size: 13px; color: var(--rm-text, #e5e5ea);
+      font-size: calc(13px * var(--rm-font-scale, 1)); color: var(--rm-text, #e5e5ea);
     }
     .edit-ing-heading { font-weight: 700; color: var(--rm-accent) !important; }
     .edit-ing-text { flex: 1; line-height: 1.4; }
@@ -3095,14 +3095,14 @@ class RmRecipeDetail extends LitElement {
       flex: 1; background: var(--rm-bg-elevated, #232833);
       border: 1px solid var(--rm-border, rgba(255,255,255,0.12));
       border-radius: 8px; color: var(--rm-text, #e5e5ea);
-      padding: 7px 10px; font-size: 13px; font-family: inherit; resize: none;
+      padding: 7px 10px; font-size: calc(13px * var(--rm-font-scale, 1)); font-family: inherit; resize: none;
     }
     .edit-add-row input:focus, .edit-add-row textarea:focus {
       outline: none; border-color: var(--rm-accent, #9fa8da);
     }
     .edit-add-btn {
       background: var(--rm-accent, #9fa8da); border: none; border-radius: 8px;
-      color: #fff; padding: 7px 12px; cursor: pointer; font-size: 13px;
+      color: #fff; padding: 7px 12px; cursor: pointer; font-size: calc(13px * var(--rm-font-scale, 1));
       white-space: nowrap; flex-shrink: 0;
     }
 
@@ -3209,12 +3209,12 @@ class RmRecipeDetail extends LitElement {
       align-items: center;
     }
     .wide-title {
-      margin: 0 0 4px; font-size: 22px; font-weight: 700;
+      margin: 0 0 4px; font-size: calc(22px * var(--rm-font-scale, 1)); font-weight: 700;
       color: var(--rm-text); line-height: 1.2; text-align: center;
     }
     .wide-desc {
       text-align: center; margin: 6px 0;
-      font-size: 13px; color: var(--rm-text-secondary); line-height: 1.5;
+      font-size: calc(13px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary); line-height: 1.5;
     }
     .wide-info-card .quick-rating { justify-content: center; margin-bottom: 6px; }
     .wide-info-card .action-btns-row { justify-content: center; flex-wrap: wrap; width: 100%; }
@@ -3272,7 +3272,7 @@ class RmRecipeDetail extends LitElement {
       border-radius: 10px; padding: 12px;
     }
     .review-title {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 600; text-transform: uppercase;
       letter-spacing: 0.05em; color: var(--rm-text-secondary, #8e8e93);
     }
     .review-list {
@@ -3289,7 +3289,7 @@ class RmRecipeDetail extends LitElement {
       padding: 4px 10px; border-radius: 999px;
       border: 1.5px solid var(--rm-border, rgba(255,255,255,0.12));
       background: none; cursor: pointer;
-      font-size: 12px; color: var(--rm-text, #e5e5ea);
+      font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text, #e5e5ea);
       font-family: inherit; transition: all 0.15s; white-space: nowrap;
     }
     .review-chip ha-icon { --mdc-icon-size: 13px; }
@@ -3309,7 +3309,7 @@ class RmRecipeDetail extends LitElement {
       padding: 12px 14px;
     }
     .wide-section-title {
-      font-size: 14px; font-weight: 700; color: var(--rm-text);
+      font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 700; color: var(--rm-text);
       margin-bottom: 10px; padding-bottom: 6px;
       border-bottom: 1px solid var(--rm-border);
     }
@@ -3329,17 +3329,17 @@ class RmRecipeDetail extends LitElement {
     }
 
     /* ── Markdown content ─────────────────────────────── */
-    .md-content { font-size: 14px; line-height: 1.65; }
+    .md-content { font-size: calc(14px * var(--rm-font-scale, 1)); line-height: 1.65; }
     .md-content p { margin: 0 0 6px; }
     .md-content p.md-gap { margin: 0 0 10px; }
-    .md-content h1 { font-size: 18px; font-weight: 700; margin: 10px 0 4px; }
-    .md-content h2 { font-size: 16px; font-weight: 700; margin: 8px 0 4px; }
-    .md-content h3 { font-size: 14px; font-weight: 700; margin: 6px 0 3px; }
+    .md-content h1 { font-size: calc(18px * var(--rm-font-scale, 1)); font-weight: 700; margin: 10px 0 4px; }
+    .md-content h2 { font-size: calc(16px * var(--rm-font-scale, 1)); font-weight: 700; margin: 8px 0 4px; }
+    .md-content h3 { font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 700; margin: 6px 0 3px; }
     .md-content ul, .md-content ol { padding-left: 20px; margin: 4px 0 8px; }
     .md-content li { margin: 2px 0; }
     .md-content strong { font-weight: 700; }
     .md-content em { font-style: italic; }
-    .md-content code { font-family: monospace; font-size: 12px; background: var(--rm-bg-elevated); padding: 1px 4px; border-radius: 3px; }
+    .md-content code { font-family: monospace; font-size: calc(12px * var(--rm-font-scale, 1)); background: var(--rm-bg-elevated); padding: 1px 4px; border-radius: 3px; }
     .md-content a { color: var(--rm-accent); text-decoration: none; }
     .md-content a:hover { text-decoration: underline; }
     .md-content hr { border: none; border-top: 1px solid var(--rm-border); margin: 8px 0; }
@@ -3350,7 +3350,7 @@ class RmRecipeDetail extends LitElement {
     .list-picker-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-height: 28px; }
     .list-chip {
       display: inline-flex; align-items: center; gap: 3px;
-      padding: 3px 8px; border-radius: 14px; font-size: 12px;
+      padding: 3px 8px; border-radius: 14px; font-size: calc(12px * var(--rm-font-scale, 1));
       border: 1px solid var(--rm-border); background: var(--rm-bg-elevated);
       color: var(--rm-text); cursor: default; transition: all 0.12s;
     }
@@ -3359,7 +3359,7 @@ class RmRecipeDetail extends LitElement {
     .list-chip.available:hover { border-color: var(--rm-accent); color: var(--rm-accent); background: var(--rm-accent-soft); }
     .list-chip-remove {
       background: none; border: none; padding: 0 0 0 2px; cursor: pointer;
-      color: inherit; font-size: 14px; line-height: 1; opacity: 0.7;
+      color: inherit; font-size: calc(14px * var(--rm-font-scale, 1)); line-height: 1; opacity: 0.7;
     }
     .list-chip-remove:hover { opacity: 1; }
     .list-chip-add-btn {
@@ -3378,13 +3378,13 @@ class RmRecipeDetail extends LitElement {
     .list-picker-new-row { display: flex; gap: 6px; }
     .list-picker-input {
       flex: 1; background: var(--rm-bg-surface, var(--rm-bg)); border: 1px solid var(--rm-border);
-      border-radius: 7px; color: var(--rm-text); padding: 5px 9px; font-size: 13px;
+      border-radius: 7px; color: var(--rm-text); padding: 5px 9px; font-size: calc(13px * var(--rm-font-scale, 1));
       font-family: inherit; min-width: 0;
     }
     .list-picker-input:focus { outline: none; border-color: var(--rm-accent); }
     .list-picker-new-btn {
       padding: 5px 12px; border-radius: 7px; border: 1px solid var(--rm-accent);
-      background: var(--rm-accent); color: #fff; cursor: pointer; font-size: 13px; font-family: inherit;
+      background: var(--rm-accent); color: #fff; cursor: pointer; font-size: calc(13px * var(--rm-font-scale, 1)); font-family: inherit;
     }
     .list-picker-new-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -3396,7 +3396,7 @@ class RmRecipeDetail extends LitElement {
     }
     .ing-inline-input {
       background: var(--rm-bg-elevated); border: 1px solid var(--rm-accent);
-      border-radius: 6px; color: var(--rm-text); padding: 4px 6px; font-size: 13px;
+      border-radius: 6px; color: var(--rm-text); padding: 4px 6px; font-size: calc(13px * var(--rm-font-scale, 1));
       font-family: inherit; min-width: 0;
     }
     .ing-inline-input:focus { outline: none; }

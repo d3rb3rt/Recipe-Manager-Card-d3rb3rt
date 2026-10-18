@@ -484,6 +484,7 @@ class RecipeManagerCard extends LitElement {
     const vars = isDark ? (themeVars.dark ?? themeVars.light) : (themeVars.light ?? themeVars.dark);
     for (const [k, v] of Object.entries(vars)) this.style.setProperty(k, v);
     this.style.setProperty('--rm-font-size-base', FONT_SIZE_MAP[s.fontSize] ?? '15px');
+    this.style.setProperty('--rm-font-scale', String(parseFloat(FONT_SIZE_MAP[s.fontSize] ?? '15px') / 15));
     this.style.setProperty('--rm-grid-columns', `repeat(${s.columns ?? 3}, minmax(0, 1fr))`);
   }
 
@@ -1688,7 +1689,7 @@ class RecipeManagerCard extends LitElement {
       align-items: center;
       gap: 8px;
       font-weight: 700;
-      font-size: 15px;
+      font-size: calc(15px * var(--rm-font-scale, 1));
       color: var(--rm-accent);
       overflow: hidden;
     }
@@ -1722,7 +1723,7 @@ class RecipeManagerCard extends LitElement {
     .sb-search-icon { --mdc-icon-size: 16px; color: var(--rm-text-muted); flex-shrink: 0; }
     .sb-search-input {
       flex: 1; background: none; border: none; outline: none;
-      color: var(--rm-text); font-size: 13px; padding: 7px 0;
+      color: var(--rm-text); font-size: calc(13px * var(--rm-font-scale, 1)); padding: 7px 0;
     }
     .sb-search-input::placeholder { color: var(--rm-text-muted); }
     .sb-search-clear {
@@ -1736,7 +1737,7 @@ class RecipeManagerCard extends LitElement {
       width: 100%; padding: 8px 10px;
       background: var(--rm-accent); color: #fff;
       border: none; border-radius: 8px;
-      font-size: 13px; font-weight: 600; cursor: pointer;
+      font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; cursor: pointer;
       transition: opacity 0.15s;
     }
     .sb-new-btn:hover { opacity: 0.88; }
@@ -1769,7 +1770,7 @@ class RecipeManagerCard extends LitElement {
       display: flex; align-items: center; gap: 10px;
       width: 100%; padding: 9px 10px;
       background: none; border: none; border-radius: 8px;
-      font-size: 14px; color: var(--rm-text-secondary);
+      font-size: calc(14px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary);
       cursor: pointer; text-align: left;
       transition: background 0.12s, color 0.12s;
       position: relative;
@@ -1788,7 +1789,7 @@ class RecipeManagerCard extends LitElement {
       background: var(--rm-accent);
       color: #fff;
       border-radius: 10px;
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       font-weight: 700;
       padding: 1px 6px;
       min-width: 18px;
@@ -1798,7 +1799,7 @@ class RecipeManagerCard extends LitElement {
       position: absolute;
       top: 4px; right: 4px;
       margin-left: 0;
-      font-size: 9px;
+      font-size: calc(9px * var(--rm-font-scale, 1));
       padding: 1px 4px;
     }
 
@@ -1832,7 +1833,7 @@ class RecipeManagerCard extends LitElement {
 
     .rm-title {
       display: flex; align-items: center; gap: 8px;
-      font-size: 17px; font-weight: 600; color: var(--rm-text);
+      font-size: calc(17px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text);
       overflow: hidden; white-space: nowrap; flex: 1; min-width: 0;
     }
     .rm-title ha-icon { --mdc-icon-size: 22px; color: var(--rm-accent); flex-shrink: 0; }
@@ -1845,7 +1846,7 @@ class RecipeManagerCard extends LitElement {
       align-items: center;
     }
     .hdr-star {
-      font-size: 18px;
+      font-size: calc(18px * var(--rm-font-scale, 1));
       color: var(--rm-border, rgba(0,0,0,0.2));
       line-height: 1;
       cursor: pointer;
@@ -1871,14 +1872,14 @@ class RecipeManagerCard extends LitElement {
       color: var(--rm-accent);
       border-radius: 10px;
       padding: 3px 8px;
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       font-weight: 700;
       white-space: nowrap;
     }
     .timer-pill.paused { opacity: 0.6; }
     .timer-pill ha-icon { --mdc-icon-size: 12px; }
     .timer-more {
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary);
       padding: 0 4px;
     }
@@ -1906,7 +1907,7 @@ class RecipeManagerCard extends LitElement {
     .text-btn {
       background: var(--rm-accent); color: #fff; border: none;
       border-radius: var(--rm-radius-sm); padding: 8px 16px;
-      cursor: pointer; font-size: 14px; font-weight: 500;
+      cursor: pointer; font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 500;
     }
 
     .rm-loading {
@@ -1919,7 +1920,7 @@ class RecipeManagerCard extends LitElement {
       color: var(--rm-text-secondary); text-align: center;
     }
     .rm-error ha-icon { --mdc-icon-size: 48px; color: var(--error-color, #cf6679); }
-    .rm-error p { margin: 0; font-size: 14px; }
+    .rm-error p { margin: 0; font-size: calc(14px * var(--rm-font-scale, 1)); }
 
     /* ── Timers view ─────────────────────────── */
 
@@ -1940,11 +1941,11 @@ class RecipeManagerCard extends LitElement {
       padding: 40px 0 24px;
       color: var(--rm-text-secondary);
       text-align: center;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
     }
     .timer-empty ha-icon { --mdc-icon-size: 48px; opacity: 0.35; }
     .timer-empty p { margin: 0; }
-    .timer-empty-hint { font-size: 12px !important; color: var(--rm-text-muted) !important; }
+    .timer-empty-hint { font-size: calc(12px * var(--rm-font-scale, 1)) !important; color: var(--rm-text-muted) !important; }
 
     /* Active timer list: horizontal wrap of square arc tiles */
     .timer-list {
@@ -1966,7 +1967,7 @@ class RecipeManagerCard extends LitElement {
       box-sizing: border-box;
     }
     .timer-card-name {
-      font-size: 11px; font-weight: 600; color: var(--rm-text);
+      font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text);
       text-align: center; width: 100%;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -2031,12 +2032,12 @@ class RecipeManagerCard extends LitElement {
       justify-content: center;
     }
     .preset-arc-time {
-      font-size: 17px; font-weight: 700;
+      font-size: calc(17px * var(--rm-font-scale, 1)); font-weight: 700;
       color: var(--rm-text); line-height: 1;
       font-variant-numeric: tabular-nums;
     }
     .preset-arc-name {
-      font-size: 11px; font-weight: 600; color: var(--rm-text);
+      font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text);
       text-align: center; width: 100%;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -2045,7 +2046,7 @@ class RecipeManagerCard extends LitElement {
     }
     .preset-arc-btn {
       background: var(--rm-bg); border: 1px solid var(--rm-border);
-      border-radius: 10px; padding: 2px 6px; font-size: 10px;
+      border-radius: 10px; padding: 2px 6px; font-size: calc(10px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary); cursor: pointer; transition: all 0.15s;
     }
     .preset-arc-btn:hover { background: var(--rm-accent-soft); color: var(--rm-accent); border-color: var(--rm-accent); }
@@ -2053,7 +2054,7 @@ class RecipeManagerCard extends LitElement {
     .preset-arc-btn.stop:hover { background: rgba(207,102,121,0.12); }
     .preset-arc-btn.play {
       background: var(--rm-accent); color: #fff; border-color: var(--rm-accent);
-      padding: 3px 12px; font-size: 11px; border-radius: 12px;
+      padding: 3px 12px; font-size: calc(11px * var(--rm-font-scale, 1)); border-radius: 12px;
     }
     .preset-arc-btn.play:hover { opacity: 0.85; }
     .preset-remove {
@@ -2080,7 +2081,7 @@ class RecipeManagerCard extends LitElement {
       justify-content: space-between;
     }
     .timer-add-title {
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
       font-weight: 600;
       color: var(--rm-text-muted);
       text-transform: uppercase;
@@ -2094,7 +2095,7 @@ class RecipeManagerCard extends LitElement {
       border-radius: 20px;
       border: 1px solid var(--rm-border);
       cursor: pointer;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
       color: var(--rm-text-muted);
       transition: all 0.15s;
       user-select: none;
@@ -2108,7 +2109,7 @@ class RecipeManagerCard extends LitElement {
     }
     .timer-add-group { display: flex; flex-direction: column; gap: 5px; }
     .timer-add-group-label {
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       font-weight: 500;
       color: var(--rm-text-muted);
       opacity: 0.7;
@@ -2121,7 +2122,7 @@ class RecipeManagerCard extends LitElement {
       border-radius: 8px;
       color: var(--rm-text);
       padding: 6px 9px;
-      font-size: 13px;
+      font-size: calc(13px * var(--rm-font-scale, 1));
       font-family: inherit;
       min-width: 0;
     }
@@ -2143,7 +2144,7 @@ class RecipeManagerCard extends LitElement {
       color: var(--rm-text);
       padding: 8px 14px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -2194,13 +2195,13 @@ class RecipeManagerCard extends LitElement {
     }
 
     .alarm-label {
-      font-size: 18px;
+      font-size: calc(18px * var(--rm-font-scale, 1));
       font-weight: 700;
       color: var(--rm-text);
     }
 
     .alarm-sub {
-      font-size: 13px;
+      font-size: calc(13px * var(--rm-font-scale, 1));
       color: var(--rm-text-secondary);
       margin-bottom: 8px;
     }
@@ -2219,7 +2220,7 @@ class RecipeManagerCard extends LitElement {
       color: var(--rm-text);
       padding: 10px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: calc(13px * var(--rm-font-scale, 1));
       font-weight: 500;
       transition: background 0.15s;
     }
@@ -2239,7 +2240,7 @@ class RecipeManagerCard extends LitElement {
     .alarm-custom-input {
       flex: 1; background: var(--rm-bg-elevated); border: 1px solid var(--rm-border);
       border-radius: 8px; color: var(--rm-text); padding: 8px 10px;
-      font-size: 13px; font-family: inherit;
+      font-size: calc(13px * var(--rm-font-scale, 1)); font-family: inherit;
     }
     .alarm-custom-input:focus { outline: none; border-color: var(--rm-accent); }
 
@@ -2305,7 +2306,7 @@ class RecipeManagerCard extends LitElement {
       border: none;
       cursor: pointer;
       color: var(--rm-text-muted);
-      font-size: 10px;
+      font-size: calc(10px * var(--rm-font-scale, 1));
       font-weight: 500;
       padding: 6px 4px;
       position: relative;
@@ -2338,7 +2339,7 @@ class RecipeManagerCard extends LitElement {
       background: var(--rm-accent);
       color: #fff;
       border-radius: 8px;
-      font-size: 9px;
+      font-size: calc(9px * var(--rm-font-scale, 1));
       font-weight: 700;
       padding: 1px 4px;
       min-width: 14px;
@@ -2381,7 +2382,7 @@ class RecipeManagerCard extends LitElement {
       flex-shrink: 0;
     }
     .rm-mm-logo { color: var(--rm-accent); --mdc-icon-size: 22px; }
-    .rm-mm-title { flex: 1; font-weight: 700; font-size: 15px; color: var(--rm-text); }
+    .rm-mm-title { flex: 1; font-weight: 700; font-size: calc(15px * var(--rm-font-scale, 1)); color: var(--rm-text); }
 
     .rm-mm-items { padding: 8px 0; flex: 1; overflow-y: auto; }
 
@@ -2395,7 +2396,7 @@ class RecipeManagerCard extends LitElement {
       border: none;
       cursor: pointer;
       color: var(--rm-text-secondary);
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       text-align: left;
       transition: background 0.12s, color 0.12s;
       -webkit-tap-highlight-color: transparent;
@@ -2406,7 +2407,7 @@ class RecipeManagerCard extends LitElement {
 
     .rm-mm-soon {
       margin-left: auto;
-      font-size: 10px;
+      font-size: calc(10px * var(--rm-font-scale, 1));
       font-weight: 700;
       background: var(--rm-accent-soft);
       color: var(--rm-accent);

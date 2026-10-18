@@ -490,7 +490,7 @@ class RmRecipeGrid extends LitElement {
     .search-icon { color: var(--rm-text-secondary, #8e8e93); --mdc-icon-size: 18px; }
     .search-input {
       flex: 1; background: none; border: none; outline: none;
-      color: var(--rm-text, #e5e5ea); font-size: 14px; padding: 9px 0;
+      color: var(--rm-text, #e5e5ea); font-size: calc(14px * var(--rm-font-scale, 1)); padding: 9px 0;
     }
     .search-input::placeholder { color: var(--rm-text-secondary, #8e8e93); }
     .clear-btn {
@@ -521,7 +521,7 @@ class RmRecipeGrid extends LitElement {
     .filter-tab {
       display: flex; align-items: center; gap: 5px;
       background: none; border: none; border-radius: 8px;
-      padding: 6px 12px; font-size: 13px; font-weight: 500;
+      padding: 6px 12px; font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 500;
       color: var(--rm-text-secondary, #8e8e93);
       cursor: pointer; white-space: nowrap;
       transition: background 0.12s, color 0.12s;
@@ -573,14 +573,14 @@ class RmRecipeGrid extends LitElement {
       padding: 4px 0;
     }
     .rating-menu-section {
-      font-size: 10px; font-weight: 700;
+      font-size: calc(10px * var(--rm-font-scale, 1)); font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.08em;
       color: var(--rm-text-muted); padding: 8px 14px 4px;
     }
     .rating-menu-item {
       display: block; width: 100%;
       background: none; border: none; text-align: left;
-      padding: 8px 14px; font-size: 13px; cursor: pointer;
+      padding: 8px 14px; font-size: calc(13px * var(--rm-font-scale, 1)); cursor: pointer;
       color: var(--rm-text-secondary); transition: background 0.12s;
     }
     .rating-menu-item:hover { background: var(--rm-accent-soft); color: var(--rm-text); }
@@ -590,14 +590,14 @@ class RmRecipeGrid extends LitElement {
     .active-filter-bar {
       display: flex; align-items: center; gap: 8px;
       padding: 4px 14px;
-      font-size: 12px; color: var(--rm-accent);
+      font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-accent);
       background: var(--rm-accent-soft);
       flex-shrink: 0;
     }
     .clear-filter-btn {
       margin-left: auto; background: none; border: none;
       display: flex; align-items: center; gap: 3px;
-      color: var(--rm-text-secondary); font-size: 12px; cursor: pointer;
+      color: var(--rm-text-secondary); font-size: calc(12px * var(--rm-font-scale, 1)); cursor: pointer;
     }
     .clear-filter-btn ha-icon { --mdc-icon-size: 14px; }
 
@@ -616,7 +616,7 @@ class RmRecipeGrid extends LitElement {
       display: inline-flex; align-items: center; gap: 5px;
       background: var(--rm-bg-elevated); border: 1px solid var(--rm-border);
       border-radius: 20px; color: var(--rm-text-secondary);
-      font-size: 12px; padding: 4px 8px 4px 12px; cursor: pointer;
+      font-size: calc(12px * var(--rm-font-scale, 1)); padding: 4px 8px 4px 12px; cursor: pointer;
       white-space: nowrap; transition: all 0.15s;
     }
     .sub-chip.active {
@@ -625,7 +625,7 @@ class RmRecipeGrid extends LitElement {
     .sub-chip-count {
       display: inline-flex; align-items: center; justify-content: center;
       background: var(--rm-accent); color: #fff;
-      border-radius: 10px; font-size: 10px; font-weight: 700;
+      border-radius: 10px; font-size: calc(10px * var(--rm-font-scale, 1)); font-weight: 700;
       padding: 1px 5px; min-width: 16px; line-height: 1.4;
     }
 
@@ -638,7 +638,7 @@ class RmRecipeGrid extends LitElement {
     .tag-btn {
       background: var(--rm-bg-elevated); border: 1px solid var(--rm-border);
       border-radius: 20px; color: var(--rm-text-secondary);
-      font-size: 12px; padding: 4px 10px; cursor: pointer;
+      font-size: calc(12px * var(--rm-font-scale, 1)); padding: 4px 10px; cursor: pointer;
       white-space: nowrap; transition: all 0.15s;
     }
     .tag-btn.active {
@@ -654,7 +654,7 @@ class RmRecipeGrid extends LitElement {
     }
 
     .section-label {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 600; text-transform: uppercase;
       letter-spacing: 0.08em; color: var(--rm-text-secondary);
       margin: 8px 0 6px;
     }
@@ -702,7 +702,7 @@ class RmRecipeGrid extends LitElement {
 
     .recipe-info { padding: 8px 10px 10px; }
     .recipe-name {
-      margin: 0 0 4px; font-size: 14px; font-weight: 600;
+      margin: 0 0 4px; font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600;
       color: var(--rm-text); overflow: hidden; text-overflow: ellipsis;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
@@ -712,7 +712,7 @@ class RmRecipeGrid extends LitElement {
       display: flex; gap: 1px; margin-bottom: 5px;
     }
     .card-star {
-      font-size: 14px; line-height: 1;
+      font-size: calc(14px * var(--rm-font-scale, 1)); line-height: 1;
       color: var(--rm-border, rgba(200,150,0,0.25));
       -webkit-text-stroke: 1px rgba(200,150,0,0.5);
     }
@@ -724,7 +724,7 @@ class RmRecipeGrid extends LitElement {
     .recipe-meta { display: flex; flex-wrap: wrap; gap: 4px; }
     .meta-chip {
       display: inline-flex; align-items: center; gap: 3px;
-      font-size: 11px; color: var(--rm-text-secondary);
+      font-size: calc(11px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary);
       background: rgba(128,128,128,0.08); border-radius: 6px; padding: 2px 6px;
     }
     .meta-chip ha-icon { --mdc-icon-size: 12px; }
@@ -737,7 +737,7 @@ class RmRecipeGrid extends LitElement {
       color: var(--rm-text-secondary); text-align: center;
     }
     .empty-state ha-icon { --mdc-icon-size: 56px; opacity: 0.4; }
-    .empty-state p { margin: 0; font-size: 15px; }
+    .empty-state p { margin: 0; font-size: calc(15px * var(--rm-font-scale, 1)); }
   `;
 }
 

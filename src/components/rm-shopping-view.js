@@ -260,7 +260,7 @@ class RmShoppingView extends LitElement {
 
     .sv-list-name {
       font-weight: 600;
-      font-size: 15px;
+      font-size: calc(15px * var(--rm-font-scale, 1));
       color: var(--rm-text);
     }
 
@@ -275,7 +275,7 @@ class RmShoppingView extends LitElement {
       border-radius: 8px;
       color: var(--rm-text-secondary);
       padding: 5px 10px;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
       cursor: pointer;
       transition: background 0.15s;
     }
@@ -298,8 +298,8 @@ class RmShoppingView extends LitElement {
       flex-shrink: 0;
     }
     .sv-install-banner ha-icon { --mdc-icon-size: 20px; color: var(--rm-accent); flex-shrink: 0; margin-top: 1px; }
-    .sv-install-text { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--rm-text-secondary); }
-    .sv-install-text strong { color: var(--rm-text); font-size: 13px; }
+    .sv-install-text { display: flex; flex-direction: column; gap: 2px; font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary); }
+    .sv-install-text strong { color: var(--rm-text); font-size: calc(13px * var(--rm-font-scale, 1)); }
 
     /* ── Empty state ────────────────────────────────────────────────────── */
 
@@ -314,8 +314,8 @@ class RmShoppingView extends LitElement {
       gap: 6px;
     }
     .sv-empty ha-icon { --mdc-icon-size: 48px; opacity: 0.35; }
-    .sv-empty p { margin: 0; font-size: 15px; }
-    .sv-hint { font-size: 13px !important; color: var(--rm-text-muted) !important; }
+    .sv-empty p { margin: 0; font-size: calc(15px * var(--rm-font-scale, 1)); }
+    .sv-hint { font-size: calc(13px * var(--rm-font-scale, 1)) !important; color: var(--rm-text-muted) !important; }
 
     /* ── Local item rows ────────────────────────────────────────────────── */
 
@@ -329,7 +329,7 @@ class RmShoppingView extends LitElement {
 
     .sv-divider-label {
       padding: 12px 16px 4px;
-      font-size: 10px;
+      font-size: calc(10px * var(--rm-font-scale, 1));
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -351,7 +351,7 @@ class RmShoppingView extends LitElement {
 
     .sv-row-left { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
     .cat-dot { width: 8px; height: 8px; border-radius: 50%; background: #78909c; flex-shrink: 0; }
-    .row-emoji { font-size: 17px; line-height: 1; width: 22px; text-align: center; }
+    .row-emoji { font-size: calc(17px * var(--rm-font-scale, 1)); line-height: 1; width: 22px; text-align: center; }
 
     .sv-row-mid {
       flex: 1;
@@ -362,9 +362,9 @@ class RmShoppingView extends LitElement {
       flex-wrap: wrap;
     }
 
-    .sv-item-name { font-size: 14px; color: var(--rm-text); font-weight: 500; }
+    .sv-item-name { font-size: calc(14px * var(--rm-font-scale, 1)); color: var(--rm-text); font-weight: 500; }
     .sv-row-checked .sv-item-name { text-decoration: line-through; }
-    .sv-item-unit { font-size: 12px; color: var(--rm-text-muted); }
+    .sv-item-unit { font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text-muted); }
 
     .sv-row-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 

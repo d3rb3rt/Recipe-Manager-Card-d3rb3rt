@@ -337,7 +337,7 @@ class RmMealPlanner extends LitElement {
     .back-recipe-btn {
       display: inline-flex; align-items: center; gap: 6px;
       background: none; border: none; cursor: pointer;
-      color: var(--rm-accent, #ff6b35); font-size: 13px; font-weight: 500;
+      color: var(--rm-accent, #ff6b35); font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 500;
       padding: 4px 6px; border-radius: 8px; transition: background 0.15s;
     }
     .back-recipe-btn:hover { background: var(--rm-accent-soft, rgba(255,107,53,0.12)); }
@@ -363,12 +363,12 @@ class RmMealPlanner extends LitElement {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       font-weight: 500;
       color: var(--rm-text, #e5e5ea);
     }
     .today-badge {
-      font-size: 11px;
+      font-size: calc(11px * var(--rm-font-scale, 1));
       background: var(--rm-accent-soft, rgba(255,107,53,0.15));
       color: var(--rm-accent, #ff6b35);
       border-radius: 10px;
@@ -377,7 +377,7 @@ class RmMealPlanner extends LitElement {
     .text-link {
       background: none; border: none; cursor: pointer;
       color: var(--rm-accent, #ff6b35);
-      font-size: 12px; padding: 0;
+      font-size: calc(12px * var(--rm-font-scale, 1)); padding: 0;
     }
 
     /* Day headers */
@@ -394,8 +394,8 @@ class RmMealPlanner extends LitElement {
       align-items: center;
       gap: 2px;
     }
-    .day-name { font-size: 10px; text-transform: uppercase; color: var(--rm-text-secondary, #8e8e93); letter-spacing: 0.05em; }
-    .day-num { font-size: 14px; font-weight: 600; color: var(--rm-text, #e5e5ea); }
+    .day-name { font-size: calc(10px * var(--rm-font-scale, 1)); text-transform: uppercase; color: var(--rm-text-secondary, #8e8e93); letter-spacing: 0.05em; }
+    .day-num { font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text, #e5e5ea); }
     .day-header.today .day-num {
       background: var(--rm-accent, #ff6b35);
       color: #fff;
@@ -405,7 +405,7 @@ class RmMealPlanner extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: calc(12px * var(--rm-font-scale, 1));
     }
 
     /* Plan scroll */
@@ -426,7 +426,7 @@ class RmMealPlanner extends LitElement {
 
     .meal-row { margin-bottom: 8px; }
     .meal-label {
-      font-size: 10px;
+      font-size: calc(10px * var(--rm-font-scale, 1));
       text-transform: uppercase;
       letter-spacing: 0.07em;
       color: var(--rm-text-secondary, #8e8e93);
@@ -458,7 +458,7 @@ class RmMealPlanner extends LitElement {
       border-radius: 4px;
       padding: 2px 2px 2px 4px;
       cursor: pointer;
-      font-size: 10px;
+      font-size: calc(10px * var(--rm-font-scale, 1));
       color: var(--rm-text, #e5e5ea);
       position: relative;
       min-height: 22px;
@@ -484,9 +484,9 @@ class RmMealPlanner extends LitElement {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 10px;
+      font-size: calc(10px * var(--rm-font-scale, 1));
     }
-    .entry-servings { font-size: 9px; color: var(--rm-text-secondary, #8e8e93); flex-shrink: 0; }
+    .entry-servings { font-size: calc(9px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); flex-shrink: 0; }
     .entry-remove {
       background: rgba(0,0,0,0.35);
       border: none;
@@ -534,7 +534,7 @@ class RmMealPlanner extends LitElement {
       border: none;
       cursor: pointer;
       color: var(--error-color, #cf6679);
-      font-size: 13px;
+      font-size: calc(13px * var(--rm-font-scale, 1));
       display: flex;
       align-items: center;
       gap: 5px;
@@ -571,7 +571,7 @@ class RmMealPlanner extends LitElement {
       padding: 14px 16px;
       border-bottom: 1px solid var(--rm-border, rgba(255,255,255,0.08));
       font-weight: 600;
-      font-size: 15px;
+      font-size: calc(15px * var(--rm-font-scale, 1));
       color: var(--rm-text, #e5e5ea);
       text-transform: capitalize;
       flex-shrink: 0;
@@ -591,7 +591,7 @@ class RmMealPlanner extends LitElement {
       border-bottom: 1px solid var(--rm-border, rgba(255,255,255,0.06));
       flex-shrink: 0;
     }
-    .picker-label { font-size: 13px; color: var(--rm-text-secondary, #8e8e93); }
+    .picker-label { font-size: calc(13px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); }
     .servings-ctrl { display: flex; align-items: center; gap: 8px; }
     .scaler-btn {
       background: var(--rm-surface, #2c2c2e);
@@ -602,7 +602,7 @@ class RmMealPlanner extends LitElement {
       color: var(--rm-text, #e5e5ea); padding: 0;
     }
     .scaler-btn ha-icon { --mdc-icon-size: 14px; }
-    .servings-val { font-size: 14px; font-weight: 600; color: var(--rm-text, #e5e5ea); min-width: 24px; text-align: center; }
+    .servings-val { font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text, #e5e5ea); min-width: 24px; text-align: center; }
 
     .picker-search-wrap {
       display: flex;
@@ -619,7 +619,7 @@ class RmMealPlanner extends LitElement {
       border: none;
       outline: none;
       color: var(--rm-text, #e5e5ea);
-      font-size: 14px;
+      font-size: calc(14px * var(--rm-font-scale, 1));
       padding: 4px 0;
     }
     .picker-search::placeholder { color: var(--rm-text-secondary, #8e8e93); }
@@ -656,10 +656,10 @@ class RmMealPlanner extends LitElement {
     }
     .picker-placeholder ha-icon { --mdc-icon-size: 22px; }
     .picker-info { flex: 1; min-width: 0; }
-    .picker-name { font-size: 14px; font-weight: 500; color: var(--rm-text, #e5e5ea); display: block; }
-    .picker-tags { font-size: 12px; color: var(--rm-text-secondary, #8e8e93); }
+    .picker-name { font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 500; color: var(--rm-text, #e5e5ea); display: block; }
+    .picker-tags { font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); }
     .picker-fav { color: var(--error-color, #cf6679); --mdc-icon-size: 16px; }
-    .picker-empty { padding: 30px; text-align: center; color: var(--rm-text-secondary, #8e8e93); font-size: 14px; }
+    .picker-empty { padding: 30px; text-align: center; color: var(--rm-text-secondary, #8e8e93); font-size: calc(14px * var(--rm-font-scale, 1)); }
   `;
 }
 
