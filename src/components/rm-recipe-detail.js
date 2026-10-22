@@ -146,6 +146,7 @@ class RmRecipeDetail extends LitElement {
     _metricMode:         { type: Boolean },
     _wakeActive:         { type: Boolean },
     _completedSteps:     { type: Object },  // Set of completed step indices
+    _openStepIngs:       { type: Object },  // Set of step indices whose ingredient list is expanded
     _doneIngredients:    { type: Object },  // Set of ingredient indices ticked off while cooking
     _editIngInput:        { type: String },
     _editStepInput:       { type: String },
@@ -193,6 +194,7 @@ class RmRecipeDetail extends LitElement {
     this._metricMode = this.settings?.unitSystem === 'metric';
     this._wakeActive = false;
     this._completedSteps = new Set();
+    this._openStepIngs = new Set();
     this._doneIngredients = new Set();
     this._editIngInput = '';
     this._editStepInput = '';
@@ -271,6 +273,7 @@ class RmRecipeDetail extends LitElement {
         this._photoUrlInput = '';
         this._metricMode = this.settings?.unitSystem === 'metric';
         this._completedSteps = new Set();
+        this._openStepIngs = new Set();
         this._doneIngredients = new Set();
       }
       this._slideIdx = 0;
@@ -1339,11 +1342,11 @@ class RmRecipeDetail extends LitElement {
               const done = this._completedSteps.has(i);
               return html`
                 <div class="wide-section-card wide-step-card ${done ? 'step-done' : ''}" @click=${() => this._toggleStepComplete(i)}>
-                  <span class="step-num ${done ? 'done' : ''}"
-                    @click=${(e) => { e.stopPropagation(); this._toggleStepComplete(i); }}
-                    title="${done ? msg('Mark incomplete') : msg('Mark complete')}"
-                  >${done ? html`<ha-icon icon="mdi:check"></ha-icon>` : it.num}</span>
-                  <span class="step-text">${this._renderStepWithTimers(step)}</span>
+                  ${this._renderStepNum(it)}
+                  <div class="step-body">
+                    <span class="step-text">${this._renderStepWithTimers(step)}</span>
+                    ${this._renderStepIngredients(it)}
+                  </div>
                 </div>
               `;
             }) : html`<p class="empty-tab">${msg('No directions listed.')}</p>`}
@@ -1589,9 +1592,19 @@ class RmRecipeDetail extends LitElement {
     this._completedSteps = next;
   }
 
+  // Tapping the step number expands/collapses the ingredients that belong to the step.
+  _toggleStepIngredients(i) {
+    const next = new Set(this._openStepIngs);
+    if (next.has(i)) next.delete(i);
+    else next.add(i);
+    this._openStepIngs = next;
+  }
+
   // A direction starting with '#' is a section heading (like '# Step 1'). The n-th
   // heading in the directions belongs to the n-th ingredient group (the n-th ingredient
-  // heading), so its ingredients are shown right under it.
+  // heading). Every step below a heading shares that group: tapping its number shows
+  // those ingredients. Steps before the first heading (or under a heading without a
+  // matching group) have no ingredients, so their number is inert.
   _directionItems(r) {
     const groups = [];
     (r.ingredients || []).forEach((ing, idx) => {
@@ -1601,16 +1614,34 @@ class RmRecipeDetail extends LitElement {
     const items = [];
     let headingNo = 0;
     let stepNo = 0;
+    let currentIngs = [];
     (r.instructions || []).forEach((text, i) => {
       if (typeof text === 'string' && text.trimStart().startsWith('#')) {
-        items.push({ type: 'heading', label: text.replace(/^\s*#+\s*/, ''), ings: groups[headingNo] || [], i });
+        currentIngs = groups[headingNo] || [];
+        items.push({ type: 'heading', label: text.replace(/^\s*#+\s*/, ''), ings: currentIngs, i });
         headingNo++;
       } else {
         stepNo++;
-        items.push({ type: 'step', text, num: stepNo, i });
+        items.push({ type: 'step', text, num: stepNo, i, ings: currentIngs });
       }
     });
     return items;
+  }
+
+  // Step number button: opens the step's ingredient list (inert if the step has none).
+  _renderStepNum(it) {
+    const hasIngs = it.ings?.length > 0;
+    const open = hasIngs && this._openStepIngs.has(it.i);
+    return html`
+      <span class="step-num ${this._completedSteps.has(it.i) ? 'done' : ''} ${hasIngs ? 'has-ings' : 'no-ings'} ${open ? 'ings-open' : ''}"
+        @click=${(e) => { e.stopPropagation(); if (hasIngs) this._toggleStepIngredients(it.i); }}
+        title="${hasIngs ? (open ? msg('Hide ingredients') : msg('Show ingredients')) : ''}"
+      >${it.num}</span>
+    `;
+  }
+
+  _renderStepIngredients(it) {
+    return it.ings?.length && this._openStepIngs.has(it.i) ? this._renderDirIngredients(it.ings) : '';
   }
 
   _renderDirIngredients(ings) {
@@ -1644,7 +1675,6 @@ class RmRecipeDetail extends LitElement {
             return html`
               <li class="dir-heading-item">
                 <div class="dir-heading">${it.label}</div>
-                ${this._renderDirIngredients(it.ings)}
               </li>`;
           }
           const step = it.text;
@@ -1652,11 +1682,11 @@ class RmRecipeDetail extends LitElement {
           const done = this._completedSteps.has(i);
           return html`
             <li class="step-item ${done ? 'step-done' : ''}" @click=${() => this._toggleStepComplete(i)}>
-              <span class="step-num ${done ? 'done' : ''}"
-                @click=${(e) => { e.stopPropagation(); this._toggleStepComplete(i); }}
-                title="${done ? msg('Mark incomplete') : msg('Mark complete')}"
-              >${done ? html`<ha-icon icon="mdi:check"></ha-icon>` : it.num}</span>
-              <span class="step-text">${this._renderStepWithTimers(step)}</span>
+              ${this._renderStepNum(it)}
+              <div class="step-body">
+                <span class="step-text">${this._renderStepWithTimers(step)}</span>
+                ${this._renderStepIngredients(it)}
+              </div>
             </li>
           `;
         })}
@@ -2689,14 +2719,22 @@ class RmRecipeDetail extends LitElement {
       cursor: pointer;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
       user-select: none;
+      position: relative;
     }
-    .step-num:hover { opacity: 0.8; }
+    /* Larger touch target than the 30px circle, so the number is easy to hit
+       without triggering the step text (which ticks the step off). */
+    .step-num::after { content: ''; position: absolute; inset: -6px; }
+    .step-num.has-ings:hover { opacity: 0.8; }
+    .step-num.no-ings { cursor: default; }
+    .step-num.ings-open { outline: 2px solid var(--rm-accent, #ff6b35); outline-offset: 2px; }
     .step-num.done {
       background: transparent;
       border: 2px solid var(--rm-border, rgba(255,255,255,0.2));
       color: var(--rm-text-muted);
     }
     .step-num.done ha-icon { --mdc-icon-size: 16px; }
+    .step-body { flex: 1; min-width: 0; }
+    .step-body .dir-ings { margin: 8px 0 0; }
     .step-item.step-done .step-text {
       opacity: 0.45;
       text-decoration: line-through;
@@ -3321,7 +3359,6 @@ class RmRecipeDetail extends LitElement {
       align-items: flex-start;
     }
     .wide-step-card .step-num { flex-shrink: 0; }
-    .wide-step-card .step-text { flex: 1; }
     .wide-step-card.step-done .step-text {
       opacity: 0.45;
       text-decoration: line-through;
