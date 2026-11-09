@@ -1,24 +1,26 @@
-# Beta 2026.11.1-beta.2 — Fresh and Compact interface styles
+# Recipe Manager Card 2026.11.1 — Fresh and Compact interface styles
 
-Branch `beta`. Not a release. Versions follow the Shopping List Manager scheme (`YYYY.M.N`, betas as `-beta.N`).
+First release on calendar versioning (`YYYY.M.N`, the same as Shopping List Manager).
 
-## Changes since beta.1
+> **Requires:** Recipe Manager 2026.11.1 or later. For the embedded shopping list to follow the style and theme, also update Shopping List Manager to 2026.11.3 or later.
+
+## Filters, timers, settings and planner colours
 - **Filter and sort:** the tune button opens a sheet with Show (all, favourites, recent, course, category, collection), Sort by (favourites first, highest rated, quickest, A to Z) and **Minimum rating** (star rows).
 - **Timers:** new Timers view for Fresh and Compact. Quick-start chips, one card per timer with a big clock and progress bar, a green Ready card when a timer finishes. Local, Home Assistant global and Voice PE timers appear together.
 - **Voice PE / ESPHome timers:** mirrors the template sensors from the ha-timer-card guide (`sensor.vpe_timer_1`, state active, paused, finished, idle). Pause, resume and cancel work when the sensor exposes `timer_id` and `control_entity`. Turn on or off, and change the sensor prefix, in Settings > Advanced.
 - **Settings:** icon tiles on every row, and Appearance now matches Shopping List Manager: **Interface style** cards with previews, **Theme** (Meadow, Slate, Sunset), and **Colour mode** (Light, Dark, Match device, which follows Home Assistant's theme first).
 - **Planner:** meal slots use the demo's icons and colours (breakfast amber sun, lunch blue cutlery, dinner purple moon, snack pink cup).
 - Sheets (filter, planner picker) now cover the bottom nav and + button.
-- The embedded Shopping List Manager follows the chosen theme too (needs Shopping List Manager 2026.11.3-beta.8).
+- The embedded Shopping List Manager follows the chosen theme too (needs Shopping List Manager 2026.11.3).
 
-## Beta 1 (2026.11.1-beta.1)
+## Interface styles
 - **Interface style** setting (Settings > Appearance): **Fresh** (default), **Compact**, or **Classic** (the previous look and named colour themes, unchanged).
 - Fresh and Compact use the same palettes and shapes as Shopping List Manager, in light and dark.
 - **Fresh:** pill header, round buttons, rounded recipe cards, a "Tonight" card showing today's planned dinner and how many dinners are planned this week, floating bottom nav and a + button.
 - **Compact:** bold title, square buttons, collapsible recipe rows, flat bottom tab bar, + in the header.
 - Restyled: recipe grid and filters, recipe detail (narrow and wide), planner, settings, add recipe, timers, sidebar.
 - **Meal planner** has a new day view in Fresh and Compact: pick a day, see its breakfast, lunch, dinner and snack in one card, with today and the next day shown together (side by side on wide screens). Classic keeps the week grid.
-- The embedded **Shopping List Manager** follows the style and light/dark mode (needs the matching Shopping List Manager beta; older versions only pick up the colours). Its own tab bar sits flat inside the card.
+- The embedded **Shopping List Manager** follows the style and light/dark mode (needs Shopping List Manager 2026.11.3 or later; older versions only pick up the colours). Its own tab bar sits flat inside the card.
 
 ---
 

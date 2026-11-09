@@ -1,6 +1,6 @@
 {
   "name": "recipe-manager-card",
-  "version": "2026.11.1-beta.2",
+  "version": "2026.11.1",
   "description": "A recipe management card for Home Assistant",
   "private": true,
   "type": "module",
