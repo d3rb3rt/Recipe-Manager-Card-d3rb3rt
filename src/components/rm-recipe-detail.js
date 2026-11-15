@@ -2,7 +2,7 @@
  * Recipe detail view — full recipe with ingredients, directions, nutrition, photos and actions.
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { acquire as acquireWakeLock, release as releaseWakeLock, isWakeLockSupported, onChange as onWakeLockChange } from '../services/wake-lock.js';
 
@@ -163,6 +163,7 @@ class RmRecipeDetail extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.recipe = null;
     this.api = null;
     this.shoppingLists = [];
@@ -1640,7 +1641,7 @@ class RmRecipeDetail extends LitElement {
 
         ${r?.servings ? html`
           <div class="nutr-serving-note">
-            ${r.servings_text ? msg(str`Per ${r.servings_text}`) : msg(str`Per ${r.servings} serving${r.servings !== 1 ? 's' : ''}`)}
+            ${r.servings_text ? msg(str`Per ${r.servings_text}`) : (r.servings === 1 ? msg(str`Per ${r.servings} serving`) : msg(str`Per ${r.servings} servings`))}
           </div>
         ` : ''}
 

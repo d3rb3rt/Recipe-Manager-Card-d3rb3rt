@@ -2,7 +2,7 @@
  * Recipe Manager Card — main entry point.
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { RecipeManagerAPI } from './services/api.js';
 import { setActiveLocale, allLocales } from './services/localize.js';
 import { acquire as acquireWakeLock, release as releaseWakeLock, isWakeLockSupported } from './services/wake-lock.js';
@@ -50,6 +50,9 @@ function loadTimerPresets() {
 function saveTimerPresets(presets) {
   try { localStorage.setItem(TIMER_PRESETS_KEY, JSON.stringify(presets)); } catch { /* ignore */ }
 }
+
+// Countries that use metric units, used on first run when Home Assistant does not say.
+const METRIC_COUNTRIES = ['DE', 'AT', 'CH', 'FR', 'ES', 'IT', 'NL', 'BE', 'PT', 'NZ', 'AU'];
 
 const DEFAULT_SETTINGS = {
   // 'fresh' | 'compact' | 'classic'. Fresh and Compact share their palettes with
@@ -326,6 +329,7 @@ class RecipeManagerCard extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     // Captured immediately so the very first reactive update cycle (which
     // fires before _init() finishes loading recipes) can't clobber it by
     // saving the default 'grid' view over whatever was persisted.
@@ -440,7 +444,11 @@ class RecipeManagerCard extends LitElement {
       this._languageAutoDetectPending = false;
       const detected = (this.hass.language || '').split('-')[0].toLowerCase();
       const resolved = allLocales.includes(detected) ? detected : this._settings.language;
-      this._settings = { ...this._settings, language: resolved };
+      // First run only: pick metric units when Home Assistant is set to metric (or the country
+      // is one that uses metric, such as Germany), instead of always starting on imperial.
+      const cfg = this.hass.config || {};
+      const metric = cfg.unit_system?.length === 'km' || METRIC_COUNTRIES.includes(String(cfg.country || '').toUpperCase());
+      this._settings = { ...this._settings, language: resolved, ...(metric ? { unitSystem: 'metric' } : {}) };
       saveSettings(this._settings);
       setActiveLocale(resolved);
     }

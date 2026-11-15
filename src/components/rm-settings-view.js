@@ -3,7 +3,7 @@
  * Tabs: Appearance (theme, dark, font, grid, nav) | Advanced (sound, wake lock, units) | Sync | Help
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { CARD_VERSION } from 'virtual:card-version';
 import { isWakeLockSupported } from '../services/wake-lock.js';
 import { THEMES, themeEntry } from '../styles/ui-styles.js';
@@ -31,6 +31,7 @@ class RmSettingsView extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.settings = {};
     this._activeTab   = 'appearance';
     this._rmVersion   = '…';
@@ -90,6 +91,10 @@ class RmSettingsView extends LitElement {
     const ha = this.hass?.themes?.darkMode;
     if (typeof ha === 'boolean') return ha;
     return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  _themeName(id) {
+    return { meadow: msg('Meadow'), slate: msg('Slate'), sunset: msg('Sunset') }[id] ?? id;
   }
 
   // Coloured icon tile at the start of a settings row (hue 1-6, same hues as Shopping List Manager)
@@ -199,7 +204,7 @@ class RmSettingsView extends LitElement {
                       <i style="background: ${pv.a}; height: 14px"></i>
                       <i style="background: ${pv.s}; height: 22px"></i>
                     </span>
-                    <span class="theme-name">${th.name}${sel ? html`<ha-icon icon="mdi:check"></ha-icon>` : ''}</span>
+                    <span class="theme-name">${this._themeName(th.id)}${sel ? html`<ha-icon icon="mdi:check"></ha-icon>` : ''}</span>
                   </button>
                 `;
               })}

@@ -3,7 +3,8 @@
  * In wide (tablet/desktop) mode the search bar is hidden (it lives in the sidebar).
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
+import { getLocale } from '../services/localize.js';
 
 const hasAny = (g) => g._filterMode !== 'all' || g._sort !== 'default' || g._sortByRating || g._starFilter > 0
   || g._selectedCourses.size > 0 || g._selectedCategories.size > 0 || g._selectedCollections.size > 0;
@@ -39,6 +40,7 @@ class RmRecipeGrid extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.recipes = [];
     this.allRecipes = [];
     this.tags = [];
@@ -259,7 +261,7 @@ class RmRecipeGrid extends LitElement {
     const entry = plan.find(e => e.date === today && e.meal_type === 'dinner');
     const recipe = entry ? this.allRecipes.find(r => r.id === entry.recipe_id) : null;
     const total = recipe ? (recipe.total_time || (recipe.prep_time || 0) + (recipe.cook_time || 0) || null) : null;
-    const day = new Date().toLocaleDateString(undefined, { weekday: 'long' });
+    const day = new Date().toLocaleDateString(getLocale(), { weekday: 'long' });
     const n = dinners.size;
     return html`
       <section class="hero" aria-label="${msg('Tonight')}">

@@ -5,7 +5,7 @@
  * Falls back to a simple local list when SLM is not installed.
  */
 import { LitElement, html, css } from 'lit';
-import { msg } from '@lit/localize';
+import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { paletteFor, normaliseUiStyle, themeOverrides } from '../styles/ui-styles.js';
 
 const SLM_PALETTE_MAP = {
@@ -31,6 +31,7 @@ class RmShoppingView extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.hass = null;
     this.slmAvailable = false;
     this.shoppingLists = [];

@@ -2,7 +2,7 @@
  * Add Recipe dialog — URL scrape or manual entry.
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import JSZip from 'jszip';
 
 class RmAddRecipeDialog extends LitElement {
@@ -29,6 +29,7 @@ class RmAddRecipeDialog extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.api = null;
     this.asPanel = false;
     this.inlineMode = false;
@@ -395,8 +396,8 @@ class RmAddRecipeDialog extends LitElement {
           <div class="import-result ${this._importResult.failed > 0 ? 'partial' : 'success'}">
             <ha-icon icon="${this._importResult.failed > 0 ? 'mdi:alert-circle-outline' : 'mdi:check-circle-outline'}"></ha-icon>
             <div>
-              <strong>${msg(str`${this._importResult.imported} recipe${this._importResult.imported !== 1 ? 's' : ''} imported`)}</strong>
-              ${this._importResult.imagesSaved > 0 ? html` ${msg(str`with ${this._importResult.imagesSaved} photo${this._importResult.imagesSaved !== 1 ? 's' : ''}`)}` : ''}
+              <strong>${this._importResult.imported === 1 ? msg(str`${this._importResult.imported} recipe imported`) : msg(str`${this._importResult.imported} recipes imported`)}</strong>
+              ${this._importResult.imagesSaved > 0 ? html` ${this._importResult.imagesSaved === 1 ? msg(str`with ${this._importResult.imagesSaved} photo`) : msg(str`with ${this._importResult.imagesSaved} photos`)}` : ''}
               ${this._importResult.failed > 0 ? html`<br/><small>${msg(str`${this._importResult.failed} failed — check HA logs for details`)}</small>` : ''}
             </div>
           </div>
