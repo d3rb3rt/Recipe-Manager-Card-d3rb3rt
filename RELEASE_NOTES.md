@@ -1,3 +1,16 @@
+# Recipe Manager Card 2026.11.2 — Complete German
+
+> **Requires:** Recipe Manager 2026.11.2 or later.
+
+## Changes
+- **German:** every string added since 2026.11.1 is translated (Fresh and Compact styles, filter and sort, timers, settings, planner), the formal "Sie" is used throughout, and about 25 existing translations that lost the space next to a number or name are fixed ("Zurück zu Pasta", "5 Min.").
+- **Plurals:** "1 Rezept / 3 Rezepte importiert", "Pro Portion / Pro 4 Portionen" and the photo count are now correct in every language. They were built by adding an English "s".
+- **Language loading:** the card now re-renders as soon as the language file has loaded, so German no longer waits for the next tap.
+- The "Tonight" card names the weekday in the card's language, and the theme names are translated (Wiese, Schiefer, Sonnenuntergang in German).
+- **First run:** the card starts on metric units when Home Assistant is metric or the country is Germany, Austria, Switzerland and other metric countries.
+
+---
+
 # Recipe Manager Card 2026.11.1 — Fresh and Compact interface styles
 
 First release on calendar versioning (`YYYY.M.N`, the same as Shopping List Manager).
