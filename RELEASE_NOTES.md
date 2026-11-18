@@ -1,3 +1,14 @@
+# Recipe Manager Card 2026.11.3 — Clear search everywhere
+
+> **Requires:** Recipe Manager 2026.11.3 or later.
+
+## Changes
+- **Clear (X) button on every recipe search.** On the wide layout the X in the sidebar search was pushed out of view by the input's minimum width, so you had to delete the text by hand. It now always shows. The recipe picker in the meal planner (Add to Dinner and so on) had no clear button at all and now has one.
+- **Escape clears the search** in the sidebar, the grid and the planner's recipe picker.
+- The new "Clear search" label is translated into German, Spanish, French, Italian, Dutch and Portuguese.
+
+---
+
 # Recipe Manager Card 2026.11.2 — Complete German
 
 > **Requires:** Recipe Manager 2026.11.2 or later.

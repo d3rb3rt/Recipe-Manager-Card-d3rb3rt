@@ -467,9 +467,10 @@ class RmRecipeGrid extends LitElement {
                 placeholder="${msg('Search recipes…')}"
                 .value=${this.searchQuery}
                 @input=${this._handleSearchInput}
+                @keydown=${e => { if (e.key === 'Escape' && this.searchQuery) this._handleClearSearch(); }}
               />
               ${this.searchQuery ? html`
-                <button class="clear-btn" @click=${this._handleClearSearch}>
+                <button class="clear-btn" title="${msg('Clear search')}" aria-label="${msg('Clear search')}" @click=${this._handleClearSearch}>
                   <ha-icon icon="mdi:close"></ha-icon>
                 </button>
               ` : ''}

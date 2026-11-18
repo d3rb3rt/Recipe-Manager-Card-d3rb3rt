@@ -141,6 +141,7 @@
 's5dfd80e4749404c0': `Clicca per modificare`,
 's5e3202dbf4c8e8d4': `Italiana, Senza Glutine`,
 's5f43af3669b1e098': `Fonte`,
+'s5f4586bc1e2740e6': `Cancella ricerca`,
 's5fcd43aba2f3eb8c': `Ricettario`,
 's6150ddadcc938f87': `Cancella selezionati`,
 's618f36af6f22b72e': `Cottura (min)`,

@@ -141,6 +141,7 @@
 's5dfd80e4749404c0': `Clique para editar`,
 's5e3202dbf4c8e8d4': `Italiana, Sem Glúten`,
 's5f43af3669b1e098': `Fonte`,
+'s5f4586bc1e2740e6': `Limpar pesquisa`,
 's5fcd43aba2f3eb8c': `Livro de Receitas`,
 's6150ddadcc938f87': `Limpar marcados`,
 's618f36af6f22b72e': `Cozedura (min)`,

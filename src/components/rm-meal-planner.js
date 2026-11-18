@@ -432,7 +432,14 @@ class RmMealPlanner extends LitElement {
               placeholder="${msg('Search recipes…')}"
               .value=${this._pickerSearch}
               @input=${e => { this._pickerSearch = e.target.value; }}
+              @keydown=${e => { if (e.key === 'Escape' && this._pickerSearch) { e.stopPropagation(); this._pickerSearch = ''; } }}
             />
+            ${this._pickerSearch ? html`
+              <button class="picker-search-clear" title="${msg('Clear search')}" aria-label="${msg('Clear search')}"
+                @click=${() => { this._pickerSearch = ''; }}>
+                <ha-icon icon="mdi:close"></ha-icon>
+              </button>
+            ` : ''}
           </div>
           <div class="picker-list">
             ${this._pickerFiltered.length === 0 ? html`
@@ -908,6 +915,16 @@ class RmMealPlanner extends LitElement {
     .slot-btn ha-icon { --mdc-icon-size: 20px; }
     .slot-btn.add span { width: 36px; height: 36px; border-radius: 50%; background: var(--rm-accent-soft); color: var(--rm-accent-text); display: flex; align-items: center; justify-content: center; }
     .slot-btn.add ha-icon { --mdc-icon-size: 18px; }
+
+    .picker-search { min-width: 0; }
+    .picker-search-clear {
+      flex: none; width: 32px; height: 32px; padding: 0; border: none; border-radius: 50%; cursor: pointer;
+      background: var(--rm-bg-elevated, rgba(128,128,128,0.15)); color: var(--rm-text, inherit);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .picker-search-clear:hover { background: var(--rm-accent-soft); color: var(--rm-accent-text, var(--rm-accent)); }
+    .picker-search-clear:focus-visible { outline: 2px solid var(--rm-accent); outline-offset: 2px; }
+    .picker-search-clear ha-icon { --mdc-icon-size: 16px; }
   `;
 }
 

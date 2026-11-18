@@ -1116,9 +1116,11 @@ class RecipeManagerCard extends LitElement {
                 placeholder="${msg('Search…')}"
                 .value=${this._searchQuery}
                 @input=${e => { this._searchQuery = e.target.value; this._navDirection = 'back'; this._view = 'grid'; }}
+                @keydown=${e => { if (e.key === 'Escape') this._searchQuery = ''; }}
               />
               ${this._searchQuery ? html`
-                <button class="sb-search-clear" @click=${() => { this._searchQuery = ''; }}>
+                <button class="sb-search-clear" title="${msg('Clear search')}" aria-label="${msg('Clear search')}"
+                  @click=${() => { this._searchQuery = ''; }}>
                   <ha-icon icon="mdi:close"></ha-icon>
                 </button>
               ` : ''}
@@ -1956,15 +1958,17 @@ class RecipeManagerCard extends LitElement {
     }
     .sb-search-icon { --mdc-icon-size: 16px; color: var(--rm-text-muted); flex-shrink: 0; }
     .sb-search-input {
-      flex: 1; background: none; border: none; outline: none;
+      flex: 1; min-width: 0; width: 100%; background: none; border: none; outline: none;
       color: var(--rm-text); font-size: 13px; padding: 7px 0;
     }
     .sb-search-input::placeholder { color: var(--rm-text-muted); }
     .sb-search-clear {
-      background: none; border: none; cursor: pointer;
-      color: var(--rm-text-muted); padding: 2px; display: flex; align-items: center;
+      flex: none; width: 28px; height: 28px; margin-right: -6px;
+      background: var(--rm-bg-elevated, rgba(128,128,128,0.15)); border: none; border-radius: 50%; cursor: pointer;
+      color: var(--rm-text); padding: 0; display: flex; align-items: center; justify-content: center;
     }
-    .sb-search-clear ha-icon { --mdc-icon-size: 14px; }
+    .sb-search-clear:hover { background: var(--rm-accent-soft); color: var(--rm-accent-text, var(--rm-accent)); }
+    .sb-search-clear ha-icon { --mdc-icon-size: 16px; }
 
     .sb-new-btn {
       display: flex; align-items: center; gap: 8px;

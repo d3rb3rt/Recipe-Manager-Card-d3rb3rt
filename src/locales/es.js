@@ -141,6 +141,7 @@
 's5dfd80e4749404c0': `Clic para editar`,
 's5e3202dbf4c8e8d4': `Italiana, Sin Gluten`,
 's5f43af3669b1e098': `Fuente`,
+'s5f4586bc1e2740e6': `Borrar búsqueda`,
 's5fcd43aba2f3eb8c': `Recetario`,
 's6150ddadcc938f87': `Borrar marcados`,
 's618f36af6f22b72e': `Cocción (min)`,

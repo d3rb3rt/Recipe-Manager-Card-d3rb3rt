@@ -1295,6 +1295,10 @@
   <source>Sunset</source>
         <target>Sonnenuntergang</target>
 </trans-unit>
+<trans-unit id="s5f4586bc1e2740e6">
+  <source>Clear search</source>
+        <target>Suche löschen</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

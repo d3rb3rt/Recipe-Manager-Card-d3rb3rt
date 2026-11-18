@@ -161,6 +161,7 @@
 's5dfd80e4749404c0': `Zum Bearbeiten klicken`,
 's5e3202dbf4c8e8d4': `Italienisch, Glutenfrei`,
 's5f43af3669b1e098': `Quelle`,
+'s5f4586bc1e2740e6': `Suche löschen`,
 's5fcd43aba2f3eb8c': `Kochbuch`,
 's6150ddadcc938f87': `Abgehakte löschen`,
 's618f36af6f22b72e': `Kochzeit (Min.)`,

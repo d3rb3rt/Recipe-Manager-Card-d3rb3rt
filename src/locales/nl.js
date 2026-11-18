@@ -141,6 +141,7 @@
 's5dfd80e4749404c0': `Klik om te bewerken`,
 's5e3202dbf4c8e8d4': `Italiaans, Glutenvrij`,
 's5f43af3669b1e098': `Bron`,
+'s5f4586bc1e2740e6': `Zoekopdracht wissen`,
 's5fcd43aba2f3eb8c': `Kookboek`,
 's6150ddadcc938f87': `Aangevinkte wissen`,
 's618f36af6f22b72e': `Koken (min)`,
