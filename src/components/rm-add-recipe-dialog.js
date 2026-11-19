@@ -2,11 +2,12 @@
  * Add Recipe dialog — URL scrape or manual entry.
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import JSZip from 'jszip';
 
 class RmAddRecipeDialog extends LitElement {
   static properties = {
+    uiStyle: { type: String, attribute: 'ui-style', reflect: true },
     api:     { type: Object },
     asPanel:    { type: Boolean },  // true = right-side panel (wide), false = bottom sheet
     inlineMode: { type: Boolean },  // true = render as full inline view (no overlay)
@@ -28,6 +29,7 @@ class RmAddRecipeDialog extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.api = null;
     this.asPanel = false;
     this.inlineMode = false;
@@ -394,8 +396,8 @@ class RmAddRecipeDialog extends LitElement {
           <div class="import-result ${this._importResult.failed > 0 ? 'partial' : 'success'}">
             <ha-icon icon="${this._importResult.failed > 0 ? 'mdi:alert-circle-outline' : 'mdi:check-circle-outline'}"></ha-icon>
             <div>
-              <strong>${msg(str`${this._importResult.imported} recipe${this._importResult.imported !== 1 ? 's' : ''} imported`)}</strong>
-              ${this._importResult.imagesSaved > 0 ? html` ${msg(str`with ${this._importResult.imagesSaved} photo${this._importResult.imagesSaved !== 1 ? 's' : ''}`)}` : ''}
+              <strong>${this._importResult.imported === 1 ? msg(str`${this._importResult.imported} recipe imported`) : msg(str`${this._importResult.imported} recipes imported`)}</strong>
+              ${this._importResult.imagesSaved > 0 ? html` ${this._importResult.imagesSaved === 1 ? msg(str`with ${this._importResult.imagesSaved} photo`) : msg(str`with ${this._importResult.imagesSaved} photos`)}` : ''}
               ${this._importResult.failed > 0 ? html`<br/><small>${msg(str`${this._importResult.failed} failed — check HA logs for details`)}</small>` : ''}
             </div>
           </div>
@@ -777,7 +779,7 @@ class RmAddRecipeDialog extends LitElement {
       transition: background 0.15s, color 0.15s;
     }
     .mode-btn ha-icon { --mdc-icon-size: 16px; }
-    .mode-btn.active { background: var(--rm-accent, #ff6b35); color: #fff; }
+    .mode-btn.active { background: var(--rm-accent, #ff6b35); color: var(--rm-ink, #fff); }
 
     .icon-btn {
       background: none; border: none; cursor: pointer;
@@ -948,7 +950,7 @@ class RmAddRecipeDialog extends LitElement {
       flex-shrink: 0;
     }
     .action-btn ha-icon { --mdc-icon-size: 16px; }
-    .action-btn.primary { background: var(--rm-accent, #ff6b35); border-color: var(--rm-accent, #ff6b35); color: #fff; }
+    .action-btn.primary { background: var(--rm-accent, #ff6b35); border-color: var(--rm-accent, #ff6b35); color: var(--rm-ink, #fff); }
     .action-btn.sm { padding: 6px 10px; font-size: calc(13px * var(--rm-font-scale, 1)); }
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -1026,6 +1028,38 @@ class RmAddRecipeDialog extends LitElement {
       border-top: 1px solid var(--rm-border, rgba(255,255,255,0.08));
       flex-shrink: 0;
     }
+
+    /* ═══ Fresh + Compact ═══ */
+    :host([ui-style="fresh"]) .dialog-header,
+    :host([ui-style="compact"]) .dialog-header { border-bottom: none; padding: 16px 16px 4px; background: transparent; }
+    :host([ui-style="fresh"]) .mode-toggle,
+    :host([ui-style="compact"]) .mode-toggle { gap: 8px; background: none; border: none; padding: 0; }
+    :host([ui-style="fresh"]) .mode-btn,
+    :host([ui-style="compact"]) .mode-btn {
+      min-height: 40px; padding: 0 16px; border-radius: 999px; font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600;
+      border: 1px solid var(--rm-border); background: var(--rm-bg-surface); color: var(--rm-text);
+    }
+    :host([ui-style="compact"]) .mode-btn { border-radius: 12px; border-color: transparent; }
+    :host([ui-style="fresh"]) .mode-btn.active,
+    :host([ui-style="compact"]) .mode-btn.active { background: var(--rm-text); border-color: var(--rm-text); color: var(--rm-bg-main); font-weight: 700; }
+    :host([ui-style="fresh"]) .url-input,
+    :host([ui-style="compact"]) .url-input,
+    :host([ui-style="fresh"]) .field input,
+    :host([ui-style="fresh"]) .field textarea,
+    :host([ui-style="compact"]) .field input,
+    :host([ui-style="compact"]) .field textarea,
+    :host([ui-style="fresh"]) .add-row input,
+    :host([ui-style="fresh"]) .add-row textarea,
+    :host([ui-style="compact"]) .add-row input,
+    :host([ui-style="compact"]) .add-row textarea { border-radius: 14px; min-height: 48px; background: var(--rm-bg-surface); }
+    :host([ui-style="fresh"]) .action-btn,
+    :host([ui-style="fresh"]) .import-btn { min-height: 48px; border-radius: 999px; padding: 0 20px; }
+    :host([ui-style="compact"]) .action-btn,
+    :host([ui-style="compact"]) .import-btn { min-height: 48px; border-radius: 12px; padding: 0 18px; }
+    :host([ui-style="fresh"]) .file-label,
+    :host([ui-style="compact"]) .file-label { border-radius: 999px; min-height: 44px; }
+    :host([ui-style="fresh"]) .url-hint,
+    :host([ui-style="compact"]) .url-hint { background: var(--rm-accent-soft); color: var(--rm-accent-text); border-radius: var(--rm-radius-sm); padding: 12px 14px; }
   `;
 }
 

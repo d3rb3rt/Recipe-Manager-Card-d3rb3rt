@@ -2,7 +2,7 @@
  * Recipe detail view — full recipe with ingredients, directions, nutrition, photos and actions.
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { scaleAmountString, computeTotal, formatTotal, parseAmount, amountValue, formatNumber } from '../utils/amounts.js';
 import { acquire as acquireWakeLock, release as releaseWakeLock, isWakeLockSupported, onChange as onWakeLockChange } from '../services/wake-lock.js';
@@ -120,6 +120,7 @@ function convertToMetric(amount, unit) {
 
 class RmRecipeDetail extends LitElement {
   static properties = {
+    uiStyle: { type: String, attribute: 'ui-style', reflect: true },
     recipe:              { type: Object },
     api:                 { type: Object },
     shoppingLists:       { type: Array },
@@ -167,6 +168,7 @@ class RmRecipeDetail extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.recipe = null;
     this.api = null;
     this.shoppingLists = [];
@@ -1835,7 +1837,7 @@ class RmRecipeDetail extends LitElement {
 
         ${r?.servings ? html`
           <div class="nutr-serving-note">
-            ${r.servings_text ? msg(str`Per ${r.servings_text}`) : msg(str`Per ${r.servings} serving${r.servings !== 1 ? 's' : ''}`)}
+            ${r.servings_text ? msg(str`Per ${r.servings_text}`) : (r.servings === 1 ? msg(str`Per ${r.servings} serving`) : msg(str`Per ${r.servings} servings`))}
           </div>
         ` : ''}
 
@@ -2601,7 +2603,7 @@ class RmRecipeDetail extends LitElement {
     .ing-check.checked {
       background: var(--rm-accent, #ff6b35);
       border-color: var(--rm-accent, #ff6b35);
-      color: #fff;
+      color: var(--rm-ink, #fff);
     }
     .ing-check ha-icon { --mdc-icon-size: 12px; }
 
@@ -2685,7 +2687,7 @@ class RmRecipeDetail extends LitElement {
       justify-content: center;
       font-size: calc(13px * var(--rm-font-scale, 1));
       font-weight: 700;
-      color: #fff;
+      color: var(--rm-ink, #fff);
       cursor: pointer;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
       user-select: none;
@@ -2722,7 +2724,7 @@ class RmRecipeDetail extends LitElement {
       vertical-align: middle;
     }
     .time-chip ha-icon { --mdc-icon-size: 12px; }
-    .time-chip:hover { background: var(--rm-accent, #ff6b35); color: #fff; }
+    .time-chip:hover { background: var(--rm-accent, #ff6b35); color: var(--rm-ink, #fff); }
 
     /* Notes */
     .notes-text { font-size: calc(14px * var(--rm-font-scale, 1)); color: var(--rm-text, #e5e5ea); line-height: 1.6; }
@@ -2838,7 +2840,7 @@ class RmRecipeDetail extends LitElement {
       bottom: 4px;
       left: 4px;
       background: var(--rm-accent, #ff6b35);
-      color: #fff;
+      color: var(--rm-ink, #fff);
       font-size: calc(10px * var(--rm-font-scale, 1));
       font-weight: 700;
       padding: 2px 6px;
@@ -2931,7 +2933,7 @@ class RmRecipeDetail extends LitElement {
     .action-btn.primary {
       background: var(--rm-accent, #ff6b35);
       border-color: var(--rm-accent, #ff6b35);
-      color: #fff;
+      color: var(--rm-ink, #fff);
     }
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .icon-btn {
@@ -3102,7 +3104,7 @@ class RmRecipeDetail extends LitElement {
     }
     .edit-add-btn {
       background: var(--rm-accent, #9fa8da); border: none; border-radius: 8px;
-      color: #fff; padding: 7px 12px; cursor: pointer; font-size: calc(13px * var(--rm-font-scale, 1));
+      color: var(--rm-ink, #fff); padding: 7px 12px; cursor: pointer; font-size: calc(13px * var(--rm-font-scale, 1));
       white-space: nowrap; flex-shrink: 0;
     }
 
@@ -3384,7 +3386,7 @@ class RmRecipeDetail extends LitElement {
     .list-picker-input:focus { outline: none; border-color: var(--rm-accent); }
     .list-picker-new-btn {
       padding: 5px 12px; border-radius: 7px; border: 1px solid var(--rm-accent);
-      background: var(--rm-accent); color: #fff; cursor: pointer; font-size: calc(13px * var(--rm-font-scale, 1)); font-family: inherit;
+      background: var(--rm-accent); color: var(--rm-ink, #fff); cursor: pointer; font-size: calc(13px * var(--rm-font-scale, 1)); font-family: inherit;
     }
     .list-picker-new-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -3409,9 +3411,124 @@ class RmRecipeDetail extends LitElement {
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .ing-inline-save { border-color: var(--rm-accent); color: var(--rm-accent); }
-    .ing-inline-save:hover { background: var(--rm-accent); color: #fff; }
+    .ing-inline-save:hover { background: var(--rm-accent); color: var(--rm-ink, #fff); }
     .ing-inline-save ha-icon, .ing-inline-cancel ha-icon { --mdc-icon-size: 13px; }
 
+
+    /* ═══ Fresh + Compact ═══ */
+    :host([ui-style="fresh"]) .hero,
+    :host([ui-style="compact"]) .hero { margin: 12px 20px 0; border-radius: var(--rm-radius-card); background: linear-gradient(135deg, var(--rm-accent-soft), var(--rm-bg-elevated)); }
+    :host([ui-style="fresh"]) .hero-btn,
+    :host([ui-style="compact"]) .hero-btn { background: rgba(255,255,255,0.94); color: #12201B; width: 40px; height: 40px; }
+    :host([ui-style="fresh"]) .hero-btn.fav-active,
+    :host([ui-style="compact"]) .hero-btn.fav-active { color: #A32B2B; }
+    :host([ui-style="fresh"]) .detail-scroll,
+    :host([ui-style="compact"]) .detail-scroll { padding: 16px 20px 32px; }
+    :host([ui-style="fresh"]) .recipe-title,
+    :host([ui-style="compact"]) .recipe-title { font-size: calc(28px * var(--rm-font-scale, 1)); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+    :host([ui-style="fresh"]) .recipe-title.wide-centered,
+    :host([ui-style="compact"]) .recipe-title.wide-centered { font-size: calc(28px * var(--rm-font-scale, 1)); }
+    :host([ui-style="fresh"]) .wide-title,
+    :host([ui-style="compact"]) .wide-title { font-size: calc(28px * var(--rm-font-scale, 1)); font-weight: 800; letter-spacing: -0.02em; }
+    :host([ui-style="fresh"]) .meta-chip-icon,
+    :host([ui-style="compact"]) .meta-chip-icon { border-radius: 999px; background: var(--rm-bg-surface); padding: 8px 14px; font-weight: 600; }
+    :host([ui-style="compact"]) .meta-chip-icon { border-color: transparent; border-radius: 12px; }
+    :host([ui-style="fresh"]) .chip,
+    :host([ui-style="compact"]) .chip { border-radius: 999px; padding: 6px 12px; font-weight: 600; }
+    :host([ui-style="fresh"]) .scaler-btn,
+    :host([ui-style="compact"]) .scaler-btn { width: 40px; height: 40px; background: var(--rm-bg-surface); color: var(--rm-text); }
+    :host([ui-style="fresh"]) .scaler-val,
+    :host([ui-style="compact"]) .scaler-val { font-weight: 800; }
+    :host([ui-style="fresh"]) .action-icon-btn .btn-icon,
+    :host([ui-style="compact"]) .action-icon-btn .btn-icon { background: var(--rm-accent-soft); color: var(--rm-accent-text); }
+    :host([ui-style="compact"]) .action-icon-btn .btn-icon { border-radius: 14px; }
+    :host([ui-style="fresh"]) .action-icon-btn.fav-active .btn-icon,
+    :host([ui-style="compact"]) .action-icon-btn.fav-active .btn-icon { color: var(--rm-danger); }
+    :host([ui-style="fresh"]) .quick-rating .qr-star.filled,
+    :host([ui-style="compact"]) .quick-rating .qr-star.filled { color: var(--rm-warn); }
+
+    /* Tabs become pill chips */
+    :host([ui-style="fresh"]) .tabs-row,
+    :host([ui-style="compact"]) .tabs-row { border-bottom: none; gap: 8px; margin-bottom: 12px; padding: 2px 0; }
+    :host([ui-style="fresh"]) .tab-btn,
+    :host([ui-style="compact"]) .tab-btn {
+      min-height: 40px; padding: 0 16px; border: 1px solid var(--rm-border); border-radius: 999px;
+      background: var(--rm-bg-surface); color: var(--rm-text);
+    }
+    :host([ui-style="compact"]) .tab-btn { border-radius: 12px; border-color: transparent; }
+    :host([ui-style="fresh"]) .tab-btn.active,
+    :host([ui-style="compact"]) .tab-btn.active { background: var(--rm-text); border-color: var(--rm-text); color: var(--rm-bg-main); font-weight: 700; }
+
+    /* Ingredients and steps sit in one rounded card */
+    :host([ui-style="fresh"]) .ingredient-list,
+    :host([ui-style="compact"]) .ingredient-list,
+    :host([ui-style="fresh"]) .steps-list,
+    :host([ui-style="compact"]) .steps-list {
+      background: var(--rm-bg-surface); border: 1px solid var(--rm-border);
+      border-radius: var(--rm-radius-card); padding: 2px 16px;
+    }
+    :host([ui-style="compact"]) .ingredient-list,
+    :host([ui-style="compact"]) .steps-list { border-color: transparent; }
+    :host([ui-style="fresh"]) .steps-list,
+    :host([ui-style="compact"]) .steps-list { padding: 16px; }
+    :host([ui-style="fresh"]) .ingredient-item,
+    :host([ui-style="compact"]) .ingredient-item { padding: 13px 0; border-bottom-color: var(--rm-line); }
+    :host([ui-style="fresh"]) .ingredient-item:last-child,
+    :host([ui-style="compact"]) .ingredient-item:last-child { border-bottom: none; }
+    :host([ui-style="fresh"]) .ing-amount,
+    :host([ui-style="compact"]) .ing-amount { font-weight: 800; color: var(--rm-accent-text); min-width: 76px; }
+    :host([ui-style="fresh"]) .ing-name,
+    :host([ui-style="compact"]) .ing-name { font-weight: 600; }
+    :host([ui-style="fresh"]) .step-text,
+    :host([ui-style="compact"]) .step-text { line-height: 1.5; }
+    :host([ui-style="fresh"]) .time-chip,
+    :host([ui-style="compact"]) .time-chip { border-radius: 999px; min-height: 32px; }
+    :host([ui-style="fresh"]) .time-chip:hover,
+    :host([ui-style="compact"]) .time-chip:hover { color: var(--rm-ink); }
+
+    /* Wide layout cards */
+    :host([ui-style="fresh"]) .wide-image-card,
+    :host([ui-style="fresh"]) .wide-info-card,
+    :host([ui-style="fresh"]) .wide-section-card,
+    :host([ui-style="compact"]) .wide-image-card,
+    :host([ui-style="compact"]) .wide-info-card,
+    :host([ui-style="compact"]) .wide-section-card {
+      background: var(--rm-bg-surface); border-radius: var(--rm-radius-card);
+    }
+    :host([ui-style="compact"]) .wide-image-card,
+    :host([ui-style="compact"]) .wide-info-card,
+    :host([ui-style="compact"]) .wide-section-card { border-color: transparent; }
+    :host([ui-style="fresh"]) .wide-layout,
+    :host([ui-style="compact"]) .wide-layout { padding: 16px 28px 32px; gap: 16px; }
+    :host([ui-style="fresh"]) .wide-section-title,
+    :host([ui-style="compact"]) .wide-section-title { font-size: calc(12px * var(--rm-font-scale, 1)); letter-spacing: 0.06em; text-transform: uppercase; color: var(--rm-text-secondary); border-bottom-color: var(--rm-line); }
+
+    /* Buttons */
+    :host([ui-style="fresh"]) .action-btn,
+    :host([ui-style="fresh"]) .shopping-btn,
+    :host([ui-style="fresh"]) .picker-sel-btn { min-height: 44px; border-radius: 999px; padding: 0 18px; }
+    :host([ui-style="compact"]) .action-btn,
+    :host([ui-style="compact"]) .shopping-btn,
+    :host([ui-style="compact"]) .picker-sel-btn { min-height: 44px; border-radius: 12px; padding: 0 16px; }
+    :host([ui-style="fresh"]) .edit-panel,
+    :host([ui-style="compact"]) .edit-panel { border-radius: 28px 28px 0 0; background: var(--rm-bg-main); }
+
+    :host([ui-style="fresh"]) .meta-item,
+    :host([ui-style="compact"]) .meta-item { background: var(--rm-bg-surface); border: 1px solid var(--rm-border); border-radius: 18px; padding: 10px 14px; }
+    :host([ui-style="compact"]) .meta-item { border-color: transparent; border-radius: 14px; }
+    :host([ui-style="fresh"]) .meta-val,
+    :host([ui-style="compact"]) .meta-val { font-weight: 800; font-variant-numeric: tabular-nums; }
+    :host([ui-style="fresh"]) .chip-label,
+    :host([ui-style="compact"]) .chip-label { background: none; border: none; padding-left: 0; }
+    :host([ui-style="fresh"]) .chip-course,
+    :host([ui-style="compact"]) .chip-course { background: var(--rm-accent-soft); color: var(--rm-accent-text); }
+    :host([ui-style="fresh"]) .chip-category,
+    :host([ui-style="compact"]) .chip-category { background: color-mix(in srgb, var(--rm-warn) 16%, var(--rm-bg-surface)); color: var(--rm-warn); }
+    :host([ui-style="fresh"]) .chip-collection,
+    :host([ui-style="compact"]) .chip-collection { background: var(--rm-bg-elevated); color: var(--rm-text-secondary); }
+
+    :host([ui-style="fresh"]) .wide-section-card .ingredient-list,
+    :host([ui-style="compact"]) .wide-section-card .ingredient-list { background: none; border: none; border-radius: 0; padding: 0; }
   `;
 }
 

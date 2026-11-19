@@ -2,10 +2,11 @@
  * Recipe Manager Card — main entry point.
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { RecipeManagerAPI } from './services/api.js';
 import { setActiveLocale, allLocales } from './services/localize.js';
 import { acquire as acquireWakeLock, release as releaseWakeLock, isWakeLockSupported } from './services/wake-lock.js';
+import { paletteFor, normaliseUiStyle } from './styles/ui-styles.js';
 
 const GLOBAL_WAKE_LOCK_REASON = 'manual-toggle';
 
@@ -50,7 +51,13 @@ function saveTimerPresets(presets) {
   try { localStorage.setItem(TIMER_PRESETS_KEY, JSON.stringify(presets)); } catch { /* ignore */ }
 }
 
+// Countries that use metric units, used on first run when Home Assistant does not say.
+const METRIC_COUNTRIES = ['DE', 'AT', 'CH', 'FR', 'ES', 'IT', 'NL', 'BE', 'PT', 'NZ', 'AU'];
+
 const DEFAULT_SETTINGS = {
+  // 'fresh' | 'compact' | 'classic'. Fresh and Compact share their palettes with
+  // Shopping List Manager; Classic keeps the original named themes below.
+  uiStyle: 'fresh',
   theme: 'soft',
   darkMode: 'system',
   fontSize: 'medium',
@@ -59,6 +66,9 @@ const DEFAULT_SETTINGS = {
   showPlanner: true,
   recentCount: 12,
   timerSound: 'beep',
+  // Mirror Voice PE / ESPHome timers (template sensors, see ha-timer-card voice-pe docs)
+  vpeTimers: true,
+  vpePrefix: 'sensor.vpe_timer',
   keepScreenOn: false,
   keepScreenOnMins: 30,
   showUnitConversion: false,
@@ -295,6 +305,8 @@ class RecipeManagerCard extends LitElement {
     _wide: { type: Boolean },
     _sidebarCollapsed: { type: Boolean },
     _gridScrollPos: { type: Number },
+    _weekPlan: { type: Array },
+    _overlayOpen: { type: Boolean },
     _recentRecipeIds: { type: Array },
     _timers: { type: Array },
     _timerAlarm: { type: Object },
@@ -318,6 +330,7 @@ class RecipeManagerCard extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     // Captured immediately so the very first reactive update cycle (which
     // fires before _init() finishes loading recipes) can't clobber it by
     // saving the default 'grid' view over whatever was persisted.
@@ -338,6 +351,8 @@ class RecipeManagerCard extends LitElement {
     setActiveLocale(this._settings.language);
     this._wide = false;
     this._sidebarCollapsed = true;
+    this._weekPlan = [];
+    this._overlayOpen = false;
     this._gridScrollPos = 0;
     this._recentRecipeIds = loadRecentRecipes();
     this._timers = loadTimers();
@@ -430,7 +445,11 @@ class RecipeManagerCard extends LitElement {
       this._languageAutoDetectPending = false;
       const detected = (this.hass.language || '').split('-')[0].toLowerCase();
       const resolved = allLocales.includes(detected) ? detected : this._settings.language;
-      this._settings = { ...this._settings, language: resolved };
+      // First run only: pick metric units when Home Assistant is set to metric (or the country
+      // is one that uses metric, such as Germany), instead of always starting on imperial.
+      const cfg = this.hass.config || {};
+      const metric = cfg.unit_system?.length === 'km' || METRIC_COUNTRIES.includes(String(cfg.country || '').toUpperCase());
+      this._settings = { ...this._settings, language: resolved, ...(metric ? { unitSystem: 'metric' } : {}) };
       saveSettings(this._settings);
       setActiveLocale(resolved);
     }
@@ -440,6 +459,9 @@ class RecipeManagerCard extends LitElement {
     }
     if (changedProps.has('hass') && this._api) this._api.hass = this.hass;
     if (changedProps.has('_settings')) this._applyTheme();
+    else if (changedProps.has('hass') && this.hass?.themes?.darkMode !== this._lastHaDark) this._applyTheme();
+    this._lastHaDark = this.hass?.themes?.darkMode;
+    if (changedProps.has('_view') && this._overlayOpen) this._overlayOpen = false;
     if (changedProps.has('_view') || changedProps.has('_selectedRecipe')) this._saveViewState();
   }
 
@@ -473,8 +495,39 @@ class RecipeManagerCard extends LitElement {
     }
   }
 
+  // Dark when set to Dark, or when set to "Match device" and Home Assistant (else the OS) is dark.
+  _isDarkNow() {
+    const m = this._settings.darkMode;
+    if (m === 'on') return true;
+    if (m === 'off') return false;
+    const ha = this.hass?.themes?.darkMode;
+    if (typeof ha === 'boolean') return ha;
+    return this._darkModeQuery?.matches ?? false;
+  }
+
   _applyTheme() {
     const s = this._settings;
+    const ui = normaliseUiStyle(s.uiStyle);
+    this.setAttribute('data-ui', ui);
+    this.style.setProperty('--rm-font-size-base', FONT_SIZE_MAP[s.fontSize] ?? '15px');
+    this.style.setProperty('--rm-grid-columns', `repeat(${s.columns ?? 3}, minmax(0, 1fr))`);
+
+    // Fresh / Compact: one fixed palette per style (light or dark), same as Shopping List Manager.
+    if (ui !== 'classic') {
+      const dark = this._isDarkNow();
+      this.setAttribute('data-mode', dark ? 'dark' : 'light');
+      for (const [k, v] of Object.entries(paletteFor(ui, dark, s.designTheme))) this.style.setProperty(k, v);
+      return;
+    }
+
+    // Classic: original named themes. Clear the tokens only the new styles define so
+    // they fall back to the stylesheet defaults.
+    this.removeAttribute('data-mode');
+    for (const k of ['--rm-bg', '--rm-surface', '--rm-success', '--rm-accent-text', '--rm-ink', '--rm-line', '--rm-warn', '--rm-danger', '--rm-radius-card', '--rm-shadow-float']) {
+      this.style.removeProperty(k);
+    }
+    this.style.removeProperty('--rm-radius');
+    this.style.removeProperty('--rm-radius-sm');
     const themeVars = THEME_VARS[s.theme] ?? THEME_VARS.soft;
     const alwaysDark = !themeVars.light;
     const alwaysLight = !themeVars.dark;
@@ -499,12 +552,24 @@ class RecipeManagerCard extends LitElement {
     this._loading = true;
     this._loadLocalShopping();
     try {
-      await Promise.all([this._loadRecipes(), this._loadTags(), this._loadShoppingLists(), this._loadGlobalTimers()]);
+      await Promise.all([this._loadRecipes(), this._loadTags(), this._loadShoppingLists(), this._loadGlobalTimers(), this._loadWeekPlan()]);
       this._restoreViewState();
       await this._subscribe();
     } catch (e) {
       this._error = e.message || msg('Failed to load recipes');
     } finally { this._loading = false; }
+  }
+
+  // This week's meal plan, used by the "tonight" hero on the recipe grid.
+  async _loadWeekPlan() {
+    try {
+      const d = new Date();
+      const day = (d.getDay() + 6) % 7; // Monday = 0
+      d.setDate(d.getDate() - day);
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const res = await this._api.getMealPlan(iso);
+      this._weekPlan = res?.entries ?? [];
+    } catch { this._weekPlan = []; }
   }
 
   async _loadGlobalTimers() {
@@ -582,6 +647,8 @@ class RecipeManagerCard extends LitElement {
             this._selectedRecipe = this._recipes.find(r => r.id === this._selectedRecipe.id)
               ?? this._selectedRecipe;
           }
+        } else if (/meal_plan/.test(t ?? '')) {
+          this._loadWeekPlan();
         } else if (t === 'recipe_manager_global_timer_added') {
           // Only add if not already present (this device may have added it optimistically)
           if (!this._timers.find(x => x.id === d.id)) {
@@ -686,6 +753,7 @@ class RecipeManagerCard extends LitElement {
   // -- Timer management -----------------------------------------------------
 
   _tickTimers() {
+    if (this._view === 'timers' && this._vpeTimers.some(t => t.running)) this.requestUpdate();
     if (!this._timers.length) return;
     let changed = false;
     const newAlarms = [];
@@ -1080,9 +1148,11 @@ class RecipeManagerCard extends LitElement {
                 placeholder="${msg('Search…')}"
                 .value=${this._searchQuery}
                 @input=${e => { this._searchQuery = e.target.value; this._navDirection = 'back'; this._view = 'grid'; }}
+                @keydown=${e => { if (e.key === 'Escape') this._searchQuery = ''; }}
               />
               ${this._searchQuery ? html`
-                <button class="sb-search-clear" @click=${() => { this._searchQuery = ''; }}>
+                <button class="sb-search-clear" title="${msg('Clear search')}" aria-label="${msg('Clear search')}"
+                  @click=${() => { this._searchQuery = ''; }}>
                   <ha-icon icon="mdi:close"></ha-icon>
                 </button>
               ` : ''}
@@ -1113,7 +1183,7 @@ class RecipeManagerCard extends LitElement {
           >
             <ha-icon icon="mdi:timer-outline"></ha-icon>
             ${!collapsed ? html`<span>${msg('Timers')}</span>` : ''}
-            ${this._timers.length ? html`<span class="sb-timer-badge">${this._timers.length}</span>` : ''}
+            ${this._timerCount ? html`<span class="sb-timer-badge">${this._timerCount}</span>` : ''}
           </button>
         </div>
 
@@ -1167,7 +1237,7 @@ class RecipeManagerCard extends LitElement {
               <ha-icon icon="mdi:arrow-left"></ha-icon>
             </button>
           ` : ''}
-          <div class="rm-title">
+          <div class="rm-title ${title ? '' : 'empty'}">
             <ha-icon icon="mdi:chef-hat"></ha-icon>
             <span>${title}</span>
           </div>
@@ -1198,6 +1268,12 @@ class RecipeManagerCard extends LitElement {
             <ha-icon icon="${this._globalWakeActive ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>
           </button>
 
+          ${!wide && this._view === 'grid' && normaliseUiStyle(this._settings.uiStyle) === 'compact' ? html`
+            <button class="icon-btn primary" @click=${() => { this._navDirection = 'forward'; this._view = 'add'; }} title="${msg('New Recipe')}">
+              <ha-icon icon="mdi:plus"></ha-icon>
+            </button>
+          ` : ''}
+
           ${inSettings || inAdd || inTimers ? html`
             <button class="icon-btn" @click=${this._handleShowGrid}>
               <ha-icon icon="mdi:close"></ha-icon>
@@ -1216,17 +1292,18 @@ class RecipeManagerCard extends LitElement {
 
   _renderBody() {
     const s = this._settings;
+    const ui = normaliseUiStyle(s.uiStyle);
 
     // ── Full-screen views (replace everything, use directional slide) ──────
     if (this._view === 'settings') return html`
-      <rm-settings-view
+      <rm-settings-view ui-style=${ui}
         .hass=${this.hass}
         .settings=${s}
         @rm-settings-change=${this._handleSettingsChange}
       ></rm-settings-view>
     `;
     if (this._view === 'add') return html`
-      <rm-add-recipe-dialog
+      <rm-add-recipe-dialog ui-style=${ui}
         .api=${this._api}
         .asPanel=${true}
         .inlineMode=${true}
@@ -1237,7 +1314,7 @@ class RecipeManagerCard extends LitElement {
     `;
     if (this._view === 'timers') return this._renderTimersView();
     if (this._view === 'planner') return html`
-      <rm-meal-planner
+      <rm-meal-planner ui-style=${ui}
         .api=${this._api}
         .recipes=${this._recipes}
         .fromRecipe=${this._plannerFromRecipe}
@@ -1247,7 +1324,7 @@ class RecipeManagerCard extends LitElement {
       ></rm-meal-planner>
     `;
     if (this._view === 'shopping') return html`
-      <rm-shopping-view
+      <rm-shopping-view ui-style=${ui}
         .hass=${this.hass}
         .slmAvailable=${this._slmAvailable}
         .shoppingLists=${this._shoppingLists}
@@ -1290,6 +1367,10 @@ class RecipeManagerCard extends LitElement {
             .recentRecipes=${this._recentRecipes}
             .recentCount=${s.recentCount ?? 12}
             .filterPreset=${this._gridFilterPreset}
+            .uiStyle=${normaliseUiStyle(s.uiStyle)}
+            .weekPlan=${this._weekPlan}
+            .showPlanner=${s.showPlanner}
+            @rm-open-planner=${() => { this._plannerFromRecipe = null; this._navDirection = 'forward'; this._view = 'planner'; this._selectedRecipe = null; }}
             @rm-search=${this._handleSearch}
             @rm-tag-filter=${this._handleTagFilter}
             @rm-open-recipe=${this._handleOpenRecipe}
@@ -1298,7 +1379,7 @@ class RecipeManagerCard extends LitElement {
         </div>
         <div class="rm-slide-pane">
           ${keepDetail ? html`
-            <rm-recipe-detail
+            <rm-recipe-detail ui-style=${ui}
               .recipe=${this._selectedRecipe}
               .api=${this._api}
               .settings=${s}
@@ -1324,69 +1405,11 @@ class RecipeManagerCard extends LitElement {
     `;
   }
 
-  _renderTimersView() {
+  // "Add timer" form: quick start (label + minutes), global toggle, save preset
+  _renderTimerAddSection() {
     const hasCustom = this._customTimerInput.trim();
     const hasPreset = this._presetNameInput.trim() && this._presetMinsInput.trim();
-    const quickAdd = [
-      { label: '+30s', secs: 30 },
-      { label: '+1m',  secs: 60 },
-      { label: '+5m',  secs: 300 },
-      { label: '+10m', secs: 600 },
-    ];
-    const nonPresetTimers = this._timers.filter(t => !t.presetId);
-    const circ = 263.9;
     return html`
-      <div class="timers-view">
-
-        <!-- Active timers (non-preset): horizontal wrap of square arc tiles -->
-        ${nonPresetTimers.length ? html`
-          <div class="timer-list">
-            ${nonPresetTimers.map(t => {
-              const tArcColor = t.remaining < 60 ? '#f59e0b' : 'var(--rm-accent)';
-              const tOffset = circ * (1 - t.remaining / t.total);
-              return html`
-                <div class="timer-card">
-                  <button class="preset-remove" @click=${() => this._stopTimer(t.id)} title="${msg('Remove')}">
-                    <ha-icon icon="mdi:close"></ha-icon>
-                  </button>
-                  ${t.global ? html`<ha-icon class="timer-global-badge" icon="mdi:earth" title="${msg('Global timer')}"></ha-icon>` : ''}
-                  <span class="timer-card-name">${t.label}</span>
-                  <div class="preset-arc-wrap">
-                    <svg viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="42" fill="none" stroke="var(--rm-border)" stroke-width="6"/>
-                      <circle cx="50" cy="50" r="42" fill="none"
-                        stroke="${tArcColor}" stroke-width="6" stroke-linecap="round"
-                        stroke-dasharray="${circ}" stroke-dashoffset="${tOffset}"
-                        transform="rotate(-90 50 50)"
-                        style="transition: stroke-dashoffset 0.8s linear, stroke 0.3s;"/>
-                    </svg>
-                    <div class="preset-arc-center">
-                      <span class="preset-arc-time">${formatTimerDisplay(t.remaining)}</span>
-                    </div>
-                  </div>
-                  <div class="preset-arc-btns">
-                    <button class="timer-ctrl-btn" @click=${() => this._pauseTimer(t.id)} title="${t.running ? msg('Pause') : msg('Resume')}">
-                      <ha-icon icon="${t.running ? 'mdi:pause' : 'mdi:play'}"></ha-icon>
-                    </button>
-                    <button class="timer-ctrl-btn danger" @click=${() => this._stopTimer(t.id)} title="${msg('Stop')}">
-                      <ha-icon icon="mdi:stop"></ha-icon>
-                    </button>
-                  </div>
-                </div>
-              `;
-            })}
-          </div>
-        ` : html`
-          <div class="timer-empty">
-            <ha-icon icon="mdi:timer-off-outline"></ha-icon>
-            <p>${msg('No active timers.')}</p>
-            <p class="timer-empty-hint">${msg("Tap a highlighted time in a recipe's directions to start one.")}</p>
-          </div>
-        `}
-
-        <!-- Spacer pushes add+presets to bottom -->
-        <div style="flex:1"></div>
-
         <!-- Add timer section -->
         <div class="timer-add-section">
           <div class="timer-add-header">
@@ -1453,6 +1476,74 @@ class RecipeManagerCard extends LitElement {
             </div>
           </div>
         </div>
+    `;
+  }
+
+  _renderTimersView() {
+    if (normaliseUiStyle(this._settings.uiStyle) !== 'classic') return this._renderTimersViewStyled();
+    const hasCustom = this._customTimerInput.trim();
+    const hasPreset = this._presetNameInput.trim() && this._presetMinsInput.trim();
+    const quickAdd = [
+      { label: '+30s', secs: 30 },
+      { label: '+1m',  secs: 60 },
+      { label: '+5m',  secs: 300 },
+      { label: '+10m', secs: 600 },
+    ];
+    const nonPresetTimers = this._timers.filter(t => !t.presetId);
+    const circ = 263.9;
+    return html`
+      <div class="timers-view">
+
+        <!-- Active timers (non-preset): horizontal wrap of square arc tiles -->
+        ${nonPresetTimers.length ? html`
+          <div class="timer-list">
+            ${nonPresetTimers.map(t => {
+              const tArcColor = t.remaining < 60 ? '#f59e0b' : 'var(--rm-accent)';
+              const tOffset = circ * (1 - t.remaining / t.total);
+              return html`
+                <div class="timer-card">
+                  <button class="preset-remove" @click=${() => this._stopTimer(t.id)} title="${msg('Remove')}">
+                    <ha-icon icon="mdi:close"></ha-icon>
+                  </button>
+                  ${t.global ? html`<ha-icon class="timer-global-badge" icon="mdi:earth" title="${msg('Global timer')}"></ha-icon>` : ''}
+                  <span class="timer-card-name">${t.label}</span>
+                  <div class="preset-arc-wrap">
+                    <svg viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="42" fill="none" stroke="var(--rm-border)" stroke-width="6"/>
+                      <circle cx="50" cy="50" r="42" fill="none"
+                        stroke="${tArcColor}" stroke-width="6" stroke-linecap="round"
+                        stroke-dasharray="${circ}" stroke-dashoffset="${tOffset}"
+                        transform="rotate(-90 50 50)"
+                        style="transition: stroke-dashoffset 0.8s linear, stroke 0.3s;"/>
+                    </svg>
+                    <div class="preset-arc-center">
+                      <span class="preset-arc-time">${formatTimerDisplay(t.remaining)}</span>
+                    </div>
+                  </div>
+                  <div class="preset-arc-btns">
+                    <button class="timer-ctrl-btn" @click=${() => this._pauseTimer(t.id)} title="${t.running ? msg('Pause') : msg('Resume')}">
+                      <ha-icon icon="${t.running ? 'mdi:pause' : 'mdi:play'}"></ha-icon>
+                    </button>
+                    <button class="timer-ctrl-btn danger" @click=${() => this._stopTimer(t.id)} title="${msg('Stop')}">
+                      <ha-icon icon="mdi:stop"></ha-icon>
+                    </button>
+                  </div>
+                </div>
+              `;
+            })}
+          </div>
+        ` : html`
+          <div class="timer-empty">
+            <ha-icon icon="mdi:timer-off-outline"></ha-icon>
+            <p>${msg('No active timers.')}</p>
+            <p class="timer-empty-hint">${msg("Tap a highlighted time in a recipe's directions to start one.")}</p>
+          </div>
+        `}
+
+        <!-- Spacer pushes add+presets to bottom -->
+        <div style="flex:1"></div>
+
+        ${this._renderTimerAddSection()}
 
         <!-- Preset timers grid (bottom) -->
         ${this._timerPresets.length ? html`
@@ -1521,6 +1612,137 @@ class RecipeManagerCard extends LitElement {
     `;
   }
 
+  // -- Voice PE / ESPHome timers (mirrored from Home Assistant sensors) ------------------
+  // Template sensors `sensor.vpe_timer_N`: state active|paused|finished|idle, attributes duration,
+  // remaining ("H:MM:SS"), display_name, and optionally timer_id + control_entity for control.
+
+  _hms(str) {
+    if (!str) return 0;
+    const p = String(str).split(':').map(n => parseInt(n, 10) || 0);
+    if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
+    if (p.length === 2) return p[0] * 60 + p[1];
+    return 0;
+  }
+
+  get _vpeTimers() {
+    if (this._settings.vpeTimers === false || !this.hass?.states) return [];
+    const prefix = (this._settings.vpePrefix || 'sensor.vpe_timer').trim();
+    const out = [];
+    for (const [entityId, st] of Object.entries(this.hass.states)) {
+      if (!entityId.startsWith(prefix)) continue;
+      const state = st.state;
+      if (!['active', 'paused', 'finished'].includes(state)) continue;
+      const a = st.attributes || {};
+      const total = this._hms(a.duration);
+      let remaining = this._hms(a.remaining);
+      if (state === 'active') {
+        const ref = Date.parse(st.last_updated) || Date.now();
+        const end = a.finishes_at ? Date.parse(a.finishes_at) : ref + remaining * 1000;
+        remaining = Math.max(0, Math.round((end - Date.now()) / 1000));
+      }
+      if (state === 'finished') remaining = 0;
+      const id = a.timer_id ?? a.timerId ?? a.id ?? null;
+      out.push({
+        id: `vpe-${entityId}`,
+        entityId,
+        label: (a.timer_name && String(a.timer_name).trim()) || (a.display_name && String(a.display_name).trim()) || msg('Voice timer'),
+        sub: a.display_name && a.timer_name ? String(a.display_name).trim() : msg('Voice PE'),
+        total: total || remaining || 1,
+        remaining,
+        running: state === 'active',
+        finished: state === 'finished',
+        vpeId: id ? String(id).trim() : null,
+        control: a.control_entity ? String(a.control_entity).trim() : null,
+        source: 'voice_pe',
+      });
+    }
+    return out.sort((x, y) => x.remaining - y.remaining);
+  }
+
+  // Everything the Timers tab counts: local + Home Assistant global timers + Voice PE
+  get _timerCount() {
+    // Voice PE timers only appear in the Fresh / Compact Timers view
+    if (normaliseUiStyle(this._settings.uiStyle) === 'classic') return this._timers.length;
+    return this._timers.length + this._vpeTimers.filter(t => !t.finished).length;
+  }
+
+  async _vpeCommand(t, verb) {
+    if (!t.control || !t.vpeId || !this.hass) return;
+    const domain = t.control.split('.')[0];
+    if (domain !== 'text' && domain !== 'input_text') return;
+    try { await this.hass.callService(domain, 'set_value', { entity_id: t.control, value: `${verb}:${t.vpeId}` }); } catch { /* ignore */ }
+  }
+
+  // Timers view for Fresh / Compact: quick-start chips, one card per timer (local, global and Voice PE)
+  _renderTimersViewStyled() {
+    const vpe = this._vpeTimers;
+    const local = this._timers.map(t => ({
+      id: t.id, label: t.label, total: t.total || t.remaining || 1, remaining: t.remaining, running: t.running,
+      finished: !!t.alarming, global: !!t.global, source: 'local',
+    }));
+    const all = [...vpe, ...local];
+    const pct = t => Math.max(0, Math.min(100, Math.round((1 - t.remaining / (t.total || 1)) * 100)));
+    const card = (t) => {
+      const isVpe = t.source === 'voice_pe';
+      const canControl = !isVpe || !!(t.control && t.vpeId);
+      return html`
+        <div class="tm-card ${t.finished ? 'done' : ''}">
+          <div class="tm-row">
+            <div class="tm-mid">
+              <div class="tm-name">
+                ${isVpe ? html`<ha-icon icon="mdi:microphone-outline"></ha-icon>` : t.global ? html`<ha-icon icon="mdi:earth"></ha-icon>` : ''}
+                <span>${t.label}</span>
+              </div>
+              <div class="tm-clock">${t.finished ? msg('Ready') : formatTimerDisplay(t.remaining)}</div>
+              ${isVpe ? html`<div class="tm-sub">${t.sub}</div>` : ''}
+            </div>
+            ${t.finished ? html`
+              ${!isVpe ? html`<button class="tm-btn text" @click=${() => this._addTimeToTimer(t.id, 60)} aria-label="${msg('Add one minute')}">+1m</button>` : ''}
+              ${canControl ? html`<button class="tm-btn" @click=${() => isVpe ? this._vpeCommand(t, 'cancel') : this._stopTimer(t.id)} aria-label="${msg('Dismiss')}"><ha-icon icon="mdi:check"></ha-icon></button>` : ''}
+            ` : html`
+              ${canControl ? html`
+                <button class="tm-btn" @click=${() => isVpe ? this._vpeCommand(t, t.running ? 'pause' : 'resume') : this._pauseTimer(t.id)}
+                  aria-label="${t.running ? msg('Pause') : msg('Resume')}"><ha-icon icon="${t.running ? 'mdi:pause' : 'mdi:play'}"></ha-icon></button>
+                <button class="tm-btn" @click=${() => isVpe ? this._vpeCommand(t, 'cancel') : this._stopTimer(t.id)}
+                  aria-label="${msg('Delete timer')}"><ha-icon icon="mdi:trash-can-outline"></ha-icon></button>
+              ` : ''}
+            `}
+          </div>
+          <div class="tm-bar"><i style="width:${t.finished ? 100 : pct(t)}%"></i></div>
+        </div>
+      `;
+    };
+    return html`
+      <div class="timers-view tm-view">
+        <div class="tm-quick" role="group" aria-label="${msg('Quick timers')}">
+          ${[5, 10, 15, 30].map(m => html`
+            <button class="tm-chip" @click=${() => this._startTimer(m * 60, null, null, this._globalMode)}>
+              <ha-icon icon="mdi:plus"></ha-icon>${msg(str`${m} min`)}
+            </button>`)}
+          ${this._timerPresets.map(p => html`
+            <span class="tm-chip preset">
+              <button class="tm-chip-main" @click=${() => this._startTimer(p.seconds, p.name, p.id, this._globalMode)}>${p.name} · ${Math.round(p.seconds / 60)} ${msg('min')}</button>
+              <button class="tm-chip-x" @click=${() => this._removePreset(p.id)} aria-label="${msg(str`Remove preset ${p.name}`)}"><ha-icon icon="mdi:close"></ha-icon></button>
+            </span>`)}
+          <label class="tm-chip toggle ${this._globalMode ? 'on' : ''}" title="${msg('Sync timer across all devices via Home Assistant')}">
+            <input type="checkbox" .checked=${this._globalMode} @change=${e => { this._globalMode = e.target.checked; }} />
+            <ha-icon icon="mdi:earth"></ha-icon>${msg('Global')}
+          </label>
+        </div>
+
+        ${all.length ? html`<div class="tm-list">${all.map(card)}</div>` : html`
+          <div class="timer-empty">
+            <ha-icon icon="mdi:timer-off-outline"></ha-icon>
+            <p>${msg('No timers running')}</p>
+            <p class="timer-empty-hint">${msg("Start one from a recipe step, a quick timer above, or by voice.")}</p>
+          </div>
+        `}
+
+        ${this._renderTimerAddSection()}
+      </div>
+    `;
+  }
+
   _renderTimerAlarm() {
     const alarm = this._timerAlarm;
     if (!alarm) return '';
@@ -1575,18 +1797,19 @@ class RecipeManagerCard extends LitElement {
       <nav class="rm-bottom-nav">
         ${btn('mdi:home', msg('Home'), 'grid', () => { this._navDirection = 'back'; this._view = 'grid'; this._selectedRecipe = null; })}
         ${btn('mdi:cart-outline', msg('Shopping'), 'shopping')}
+        ${normaliseUiStyle(this._settings.uiStyle) === 'classic' ? html`
         <button class="rm-bn-btn rm-bn-add"
           @click=${() => { this._navDirection = 'forward'; this._view = 'add'; }}
           title="${msg('New Recipe')}">
           <ha-icon icon="mdi:plus"></ha-icon>
-        </button>
+        </button>` : ''}
         ${btn('mdi:calendar-week', msg('Planner'), 'planner', () => { this._plannerFromRecipe = null; this._navDirection = 'forward'; this._view = 'planner'; this._selectedRecipe = null; })}
         <button class="rm-bn-btn ${v === 'timers' ? 'active' : ''}"
           @click=${() => { this._navDirection = 'forward'; this._timersPrevView = this._view; this._view = 'timers'; }}
           title="${msg('Timers')}">
           <ha-icon icon="mdi:timer-outline"></ha-icon>
           <span>${msg('Timers')}</span>
-          ${this._timers.length ? html`<span class="rm-bn-badge">${this._timers.length}</span>` : ''}
+          ${this._timerCount ? html`<span class="rm-bn-badge">${this._timerCount}</span>` : ''}
         </button>
       </nav>
     `;
@@ -1622,13 +1845,20 @@ class RecipeManagerCard extends LitElement {
   render() {
     const wide = this._wide;
     return html`
-      <ha-card class="rm-card ${wide ? 'rm-wide' : ''}">
+      <ha-card class="rm-card ${wide ? 'rm-wide' : ''} ${this._overlayOpen ? 'rm-overlay-open' : ''}"
+        @rm-overlay=${e => { this._overlayOpen = !!e.detail?.open; }}>
         ${wide ? this._renderSidebar() : ''}
         <div class="rm-main">
           ${this._renderHeader()}
           <div class="rm-body" data-nav="${this._navDirection}">${this._renderBody()}</div>
           ${!wide ? this._renderBottomNav() : ''}
         </div>
+
+        ${!wide && this._view === 'grid' && normaliseUiStyle(this._settings.uiStyle) === 'fresh' ? html`
+          <button class="rm-fab" @click=${() => { this._navDirection = 'forward'; this._view = 'add'; }} title="${msg('New Recipe')}" aria-label="${msg('New Recipe')}">
+            <ha-icon icon="mdi:plus"></ha-icon>
+          </button>
+        ` : ''}
 
         ${!wide && this._mobileMenuOpen ? this._renderMobileMenu() : ''}
 
@@ -1656,6 +1886,13 @@ class RecipeManagerCard extends LitElement {
       --rm-shadow:         0 2px 6px rgba(0,0,0,0.08);
       --rm-radius:         12px;
       --rm-radius-sm:      8px;
+      --rm-radius-card:    12px;
+      --rm-accent-text:    var(--rm-accent);
+      --rm-ink:            #ffffff;
+      --rm-line:           var(--rm-border);
+      --rm-warn:           #f5a623;
+      --rm-danger:         var(--error-color, #cf6679);
+      --rm-shadow-float:   0 4px 12px rgba(0,0,0,0.2);
       --rm-font-size-base: 15px;
       --rm-grid-columns:   repeat(3, minmax(0, 1fr));
       font-size: var(--rm-font-size-base);
@@ -1753,20 +1990,22 @@ class RecipeManagerCard extends LitElement {
     }
     .sb-search-icon { --mdc-icon-size: 16px; color: var(--rm-text-muted); flex-shrink: 0; }
     .sb-search-input {
-      flex: 1; background: none; border: none; outline: none;
+      flex: 1; min-width: 0; width: 100%; background: none; border: none; outline: none;
       color: var(--rm-text); font-size: calc(13px * var(--rm-font-scale, 1)); padding: 7px 0;
     }
     .sb-search-input::placeholder { color: var(--rm-text-muted); }
     .sb-search-clear {
-      background: none; border: none; cursor: pointer;
-      color: var(--rm-text-muted); padding: 2px; display: flex; align-items: center;
+      flex: none; width: 28px; height: 28px; margin-right: -6px;
+      background: var(--rm-bg-elevated, rgba(128,128,128,0.15)); border: none; border-radius: 50%; cursor: pointer;
+      color: var(--rm-text); padding: 0; display: flex; align-items: center; justify-content: center;
     }
-    .sb-search-clear ha-icon { --mdc-icon-size: 14px; }
+    .sb-search-clear:hover { background: var(--rm-accent-soft); color: var(--rm-accent-text, var(--rm-accent)); }
+    .sb-search-clear ha-icon { --mdc-icon-size: 16px; }
 
     .sb-new-btn {
       display: flex; align-items: center; gap: 8px;
       width: 100%; padding: 8px 10px;
-      background: var(--rm-accent); color: #fff;
+      background: var(--rm-accent); color: var(--rm-ink, #fff);
       border: none; border-radius: 8px;
       font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; cursor: pointer;
       transition: opacity 0.15s;
@@ -1777,7 +2016,7 @@ class RecipeManagerCard extends LitElement {
     .sb-icon-only-btn {
       display: flex; align-items: center; justify-content: center;
       width: 40px; height: 40px; margin: 0 auto;
-      background: var(--rm-accent); color: #fff;
+      background: var(--rm-accent); color: var(--rm-ink, #fff);
       border: none; border-radius: 8px;
       cursor: pointer; transition: opacity 0.15s;
     }
@@ -1818,7 +2057,7 @@ class RecipeManagerCard extends LitElement {
     .sb-timer-badge {
       margin-left: auto;
       background: var(--rm-accent);
-      color: #fff;
+      color: var(--rm-ink, #fff);
       border-radius: 10px;
       font-size: calc(11px * var(--rm-font-scale, 1));
       font-weight: 700;
@@ -1936,7 +2175,7 @@ class RecipeManagerCard extends LitElement {
     .wake-toggle-btn.active { background: var(--rm-accent-soft); color: var(--rm-accent); }
 
     .text-btn {
-      background: var(--rm-accent); color: #fff; border: none;
+      background: var(--rm-accent); color: var(--rm-ink, #fff); border: none;
       border-radius: var(--rm-radius-sm); padding: 8px 16px;
       cursor: pointer; font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 500;
     }
@@ -2084,7 +2323,7 @@ class RecipeManagerCard extends LitElement {
     .preset-arc-btn.stop { color: var(--error-color, #cf6679); border-color: var(--error-color, #cf6679); }
     .preset-arc-btn.stop:hover { background: rgba(207,102,121,0.12); }
     .preset-arc-btn.play {
-      background: var(--rm-accent); color: #fff; border-color: var(--rm-accent);
+      background: var(--rm-accent); color: var(--rm-ink, #fff); border-color: var(--rm-accent);
       padding: 3px 12px; font-size: calc(11px * var(--rm-font-scale, 1)); border-radius: 12px;
     }
     .preset-arc-btn.play:hover { opacity: 0.85; }
@@ -2184,7 +2423,7 @@ class RecipeManagerCard extends LitElement {
     .action-btn.primary {
       background: var(--rm-accent);
       border-color: var(--rm-accent);
-      color: #fff;
+      color: var(--rm-ink, #fff);
     }
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -2257,7 +2496,7 @@ class RecipeManagerCard extends LitElement {
     }
     .alarm-btn:hover { background: var(--rm-accent-soft); }
     .alarm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .alarm-btn.accent { background: var(--rm-accent); color: #fff; border-color: var(--rm-accent); }
+    .alarm-btn.accent { background: var(--rm-accent); color: var(--rm-ink, #fff); border-color: var(--rm-accent); }
     .alarm-btn.stop {
       background: var(--error-color, #cf6679);
       color: #fff;
@@ -2351,7 +2590,7 @@ class RecipeManagerCard extends LitElement {
 
     .rm-bn-add {
       background: var(--rm-accent);
-      color: white !important;
+      color: var(--rm-ink, #fff) !important;
       border-radius: 50%;
       width: 44px;
       height: 44px;
@@ -2368,7 +2607,7 @@ class RecipeManagerCard extends LitElement {
       top: 2px;
       right: calc(50% - 20px);
       background: var(--rm-accent);
-      color: #fff;
+      color: var(--rm-ink, #fff);
       border-radius: 8px;
       font-size: calc(9px * var(--rm-font-scale, 1));
       font-weight: 700;
@@ -2446,6 +2685,229 @@ class RecipeManagerCard extends LitElement {
       padding: 2px 6px;
     }
 
+
+    /* ═══════════════════════════════════════════════════════════════
+       Fresh + Compact interface styles (same language as Shopping List
+       Manager). Classic keeps everything above untouched.
+       Fresh: rounded cards, pill header, floating nav, + button.
+       Compact: flat bars, rows, square buttons.
+    ═══════════════════════════════════════════════════════════════ */
+
+    :host([data-ui="fresh"]) ha-card.rm-card,
+    :host([data-ui="compact"]) ha-card.rm-card { background: var(--rm-bg-main); }
+
+    /* Header */
+    :host([data-ui="fresh"]) .rm-header,
+    :host([data-ui="compact"]) .rm-header {
+      background: transparent;
+      border-bottom: none;
+      padding: 20px 20px 0;
+      gap: 10px;
+    }
+    :host([data-ui="compact"]) .rm-header { padding: 20px 16px 0 20px; gap: 8px; }
+    :host([data-ui="fresh"]) ha-card.rm-wide .rm-header,
+    :host([data-ui="compact"]) ha-card.rm-wide .rm-header { padding: 28px 28px 0; }
+    :host([data-ui="fresh"]) .rm-title.empty,
+    :host([data-ui="compact"]) .rm-title.empty { display: none; }
+
+    /* Fresh phone: title is a pill with an icon chip */
+    :host([data-ui="fresh"]) ha-card:not(.rm-wide) .rm-title {
+      height: 48px; padding: 0 16px 0 8px; gap: 10px; flex: 1;
+      border-radius: 999px; border: 1px solid var(--rm-border);
+      background: var(--rm-bg-surface); font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 700;
+    }
+    :host([data-ui="fresh"]) ha-card:not(.rm-wide) .rm-title ha-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--rm-accent-soft); color: var(--rm-accent-text);
+      --mdc-icon-size: 18px;
+    }
+    /* Compact phone + wide: plain bold title */
+    :host([data-ui="compact"]) .rm-title ha-icon,
+    :host([data-ui="fresh"]) ha-card.rm-wide .rm-title ha-icon { display: none; }
+    :host([data-ui="compact"]) .rm-title { font-size: calc(22px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: -0.01em; }
+    :host([data-ui="fresh"]) ha-card.rm-wide .rm-title,
+    :host([data-ui="compact"]) ha-card.rm-wide .rm-title {
+      font-size: calc(30px * var(--rm-font-scale, 1)); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+    }
+
+    /* Round header buttons */
+    :host([data-ui="fresh"]) .icon-btn {
+      width: 48px; height: 48px;
+      border: 1px solid var(--rm-border); background: var(--rm-bg-surface); color: var(--rm-text);
+    }
+    :host([data-ui="compact"]) .icon-btn {
+      width: 44px; height: 44px; border-radius: 14px;
+      border: none; background: var(--rm-bg-elevated); color: var(--rm-text);
+    }
+    :host([data-ui="fresh"]) .icon-btn:hover,
+    :host([data-ui="compact"]) .icon-btn:hover { background: var(--rm-accent-soft); color: var(--rm-accent-text); }
+    :host([data-ui="fresh"]) .icon-btn.primary,
+    :host([data-ui="compact"]) .icon-btn.primary { background: var(--rm-accent); border-color: var(--rm-accent); color: var(--rm-ink); }
+    :host([data-ui="fresh"]) .wake-toggle-btn.active,
+    :host([data-ui="compact"]) .wake-toggle-btn.active { background: var(--rm-accent-soft); color: var(--rm-accent-text); }
+    :host([data-ui="fresh"]) .hdr-star.filled,
+    :host([data-ui="compact"]) .hdr-star.filled { color: var(--rm-warn); -webkit-text-stroke: 0; }
+    :host([data-ui="fresh"]) .hdr-star,
+    :host([data-ui="compact"]) .hdr-star { -webkit-text-stroke: 0; color: var(--rm-border); }
+    :host([data-ui="fresh"]) .timer-pill,
+    :host([data-ui="compact"]) .timer-pill {
+      background: var(--rm-accent-soft); color: var(--rm-accent-text); border-radius: 999px; padding: 6px 10px;
+    }
+
+    /* Sidebar */
+    :host([data-ui="fresh"]) .rm-sidebar,
+    :host([data-ui="compact"]) .rm-sidebar { width: 236px; min-width: 236px; }
+    :host([data-ui="fresh"]) .rm-sidebar.collapsed,
+    :host([data-ui="compact"]) .rm-sidebar.collapsed { width: 72px; min-width: 72px; }
+    :host([data-ui="fresh"]) .sb-top,
+    :host([data-ui="compact"]) .sb-top { padding: 20px 14px 8px; }
+    :host([data-ui="fresh"]) .sb-search,
+    :host([data-ui="compact"]) .sb-search { height: 44px; padding: 0 14px; border-radius: 999px; gap: 8px; }
+    :host([data-ui="compact"]) .sb-search { border-radius: 12px; }
+    :host([data-ui="fresh"]) .sb-search-input,
+    :host([data-ui="compact"]) .sb-search-input { font-size: calc(14px * var(--rm-font-scale, 1)); }
+    :host([data-ui="fresh"]) .sb-new-btn,
+    :host([data-ui="compact"]) .sb-new-btn {
+      justify-content: center; min-height: 48px; border-radius: 999px;
+      font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 700; color: var(--rm-ink);
+    }
+    :host([data-ui="compact"]) .sb-new-btn { border-radius: 12px; }
+    :host([data-ui="fresh"]) .sb-icon-only-btn { width: 48px; height: 48px; border-radius: 50%; color: var(--rm-ink); }
+    :host([data-ui="compact"]) .sb-icon-only-btn { width: 48px; height: 48px; border-radius: 12px; color: var(--rm-ink); }
+    :host([data-ui="fresh"]) .sb-nav,
+    :host([data-ui="compact"]) .sb-nav { padding: 8px 14px 4px; }
+    :host([data-ui="fresh"]) .sb-bottom,
+    :host([data-ui="compact"]) .sb-bottom { padding: 8px 14px 16px; border-top: none; }
+    :host([data-ui="fresh"]) .sb-item,
+    :host([data-ui="compact"]) .sb-item {
+      min-height: 48px; padding: 0 14px; gap: 12px; border-radius: 16px;
+      font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 600;
+    }
+    :host([data-ui="compact"]) .sb-item { border-radius: 12px; }
+    :host([data-ui="fresh"]) .rm-sidebar.collapsed .sb-item,
+    :host([data-ui="compact"]) .rm-sidebar.collapsed .sb-item { padding: 0; justify-content: center; }
+    :host([data-ui="fresh"]) .sb-item.active,
+    :host([data-ui="compact"]) .sb-item.active { background: var(--rm-accent-soft); color: var(--rm-accent-text); font-weight: 700; }
+    :host([data-ui="fresh"]) .sb-timer-badge,
+    :host([data-ui="compact"]) .sb-timer-badge { color: var(--rm-ink); }
+
+    /* Phone bottom nav */
+    :host([data-ui="fresh"]) .rm-bottom-nav {
+      margin: 0 12px 12px; padding: 8px; gap: 4px;
+      border: 1px solid var(--rm-border); border-radius: 28px;
+      box-shadow: var(--rm-shadow-float); justify-content: stretch;
+    }
+    :host([data-ui="fresh"]) .rm-bn-btn {
+      min-height: 56px; justify-content: center; border-radius: 20px;
+      gap: 3px; padding: 4px 2px; font-size: calc(11.5px * var(--rm-font-scale, 1)); font-weight: 600;
+      color: var(--rm-text-secondary); min-width: 0;
+    }
+    :host([data-ui="fresh"]) .rm-bn-btn.active { background: var(--rm-accent-soft); color: var(--rm-accent-text); font-weight: 700; }
+    :host([data-ui="compact"]) .rm-bottom-nav { padding: 0; box-shadow: none; }
+    :host([data-ui="compact"]) .rm-bn-btn {
+      min-height: 60px; justify-content: center; gap: 4px;
+      font-size: calc(11.5px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text-secondary); min-width: 0;
+    }
+    :host([data-ui="compact"]) .rm-bn-btn.active { color: var(--rm-accent-text); font-weight: 700; }
+    :host([data-ui="compact"]) .rm-bn-btn.active::before {
+      content: ""; position: absolute; top: -1px; left: 30%; right: 30%;
+      height: 3px; border-radius: 0 0 3px 3px; background: var(--rm-accent);
+    }
+    :host([data-ui="fresh"]) .rm-bn-badge,
+    :host([data-ui="compact"]) .rm-bn-badge {
+      color: var(--rm-ink); font-size: calc(11px * var(--rm-font-scale, 1)); min-width: 18px; border-radius: 9px; padding: 1px 5px;
+    }
+
+    /* + button (Fresh) */
+    .rm-fab {
+      position: absolute; right: 24px; bottom: 104px; z-index: 11;
+      width: 56px; height: 56px; padding: 0; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: var(--rm-text); color: var(--rm-bg-main);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.28);
+    }
+    .rm-fab ha-icon { --mdc-icon-size: 26px; }
+
+    /* Menus, timers, buttons */
+    :host([data-ui="fresh"]) .rm-mobile-menu,
+    :host([data-ui="compact"]) .rm-mobile-menu { border-radius: 28px 0 0 28px; }
+    :host([data-ui="fresh"]) .rm-mm-item:hover:not(:disabled),
+    :host([data-ui="compact"]) .rm-mm-item:hover:not(:disabled) { color: var(--rm-accent-text); }
+    :host([data-ui="fresh"]) .timers-view,
+    :host([data-ui="compact"]) .timers-view { padding: 16px 20px 24px; }
+    :host([data-ui="fresh"]) .timer-card,
+    :host([data-ui="fresh"]) .timer-preset-card,
+    :host([data-ui="compact"]) .timer-card,
+    :host([data-ui="compact"]) .timer-preset-card { border-radius: var(--rm-radius-card); background: var(--rm-bg-surface); }
+    :host([data-ui="compact"]) .timer-card,
+    :host([data-ui="compact"]) .timer-preset-card { border-color: transparent; }
+    :host([data-ui="fresh"]) .text-btn,
+    :host([data-ui="fresh"]) .action-btn,
+    :host([data-ui="compact"]) .text-btn,
+    :host([data-ui="compact"]) .action-btn { min-height: 44px; }
+    :host([data-ui="fresh"]) .text-btn,
+    :host([data-ui="fresh"]) .action-btn { border-radius: 999px; padding: 0 18px; }
+    :host([data-ui="compact"]) .text-btn,
+    :host([data-ui="compact"]) .action-btn { border-radius: 12px; padding: 0 16px; }
+    :host([data-ui="fresh"]) .text-btn,
+    :host([data-ui="compact"]) .text-btn { color: var(--rm-ink); }
+    :host([data-ui="fresh"]) .alarm-btn.accent,
+    :host([data-ui="compact"]) .alarm-btn.accent { color: var(--rm-ink); }
+
+    /* Timers view (Fresh + Compact): quick chips, one card per timer */
+    .tm-view { gap: 14px; }
+    .tm-quick { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tm-chip {
+      min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--rm-border);
+      background: var(--rm-bg-surface); color: var(--rm-text); font: inherit; font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    }
+    :host([data-ui="compact"]) .tm-chip { border-radius: 12px; border-color: transparent; }
+    .tm-chip ha-icon { --mdc-icon-size: 16px; }
+    .tm-chip.preset { padding: 0; gap: 0; overflow: hidden; }
+    .tm-chip-main { background: none; border: none; color: inherit; font: inherit; padding: 0 4px 0 14px; min-height: 40px; cursor: pointer; }
+    .tm-chip-x { background: none; border: none; color: var(--rm-text-secondary); width: 36px; min-height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .tm-chip.toggle input { display: none; }
+    .tm-chip.toggle.on { background: var(--rm-accent-soft); border-color: var(--rm-accent); color: var(--rm-accent-text); }
+    .tm-list { display: grid; gap: 12px; }
+    .tm-card { padding: 16px; border-radius: var(--rm-radius-card); border: 1px solid var(--rm-border); background: var(--rm-bg-surface); display: grid; gap: 12px; }
+    :host([data-ui="compact"]) .tm-card { border-color: transparent; }
+    .tm-card.done { background: var(--rm-accent); color: var(--rm-ink); border-color: var(--rm-accent); }
+    .tm-row { display: flex; align-items: center; gap: 10px; }
+    .tm-mid { flex: 1; min-width: 0; }
+    .tm-name { display: flex; align-items: center; gap: 6px; font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rm-text-secondary); }
+    .tm-name ha-icon { --mdc-icon-size: 14px; flex: none; }
+    .tm-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tm-card.done .tm-name, .tm-card.done .tm-sub { color: inherit; }
+    .tm-clock { font-size: calc(36px * var(--rm-font-scale, 1)); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .tm-sub { font-size: calc(12.5px * var(--rm-font-scale, 1)); font-weight: 500; color: var(--rm-text-secondary); }
+    .tm-bar { height: 8px; border-radius: 99px; background: var(--rm-bg-elevated); overflow: hidden; }
+    .tm-bar i { display: block; height: 100%; border-radius: 99px; background: var(--rm-accent); transition: width 0.8s linear; }
+    .tm-card.done .tm-bar { background: color-mix(in srgb, var(--rm-ink) 28%, transparent); }
+    .tm-card.done .tm-bar i { background: var(--rm-ink); }
+    .tm-btn {
+      flex: none; width: 44px; height: 44px; padding: 0; border: none; border-radius: 50%;
+      background: var(--rm-accent-soft); color: var(--rm-accent-text);
+      display: flex; align-items: center; justify-content: center; cursor: pointer; font: inherit; font-weight: 700;
+    }
+    .tm-btn.text { width: auto; padding: 0 14px; border-radius: 999px; }
+    .tm-card.done .tm-btn { background: var(--rm-ink); color: var(--rm-accent); }
+    .tm-btn:focus-visible, .tm-chip:focus-visible, .tm-chip-main:focus-visible { outline: 2px solid var(--rm-accent); outline-offset: 2px; }
+    :host([data-ui="fresh"]) .tm-view .timer-add-section,
+    :host([data-ui="compact"]) .tm-view .timer-add-section {
+      border-top: none; padding: 16px; background: var(--rm-bg-surface);
+      border: 1px solid var(--rm-border); border-radius: var(--rm-radius-card);
+    }
+    :host([data-ui="compact"]) .tm-view .timer-add-section { border-color: transparent; }
+    :host([data-ui="fresh"]) .timer-input,
+    :host([data-ui="compact"]) .timer-input { border-radius: 12px; min-height: 44px; }
+    :host([data-ui="fresh"]) .alarm-bubble,
+    :host([data-ui="compact"]) .alarm-bubble { border-radius: 28px; background: var(--rm-bg-surface); }
+
+    /* A sheet from the grid or planner covers the phone nav and + button */
+    ha-card.rm-overlay-open .rm-bottom-nav,
+    ha-card.rm-overlay-open .rm-fab { display: none; }
   `;
 }
 

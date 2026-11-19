@@ -44,12 +44,6 @@
 <trans-unit id="s7490f2b2ded8abe3">
   <source>Save recipe photos locally</source>
 <target>Guardar fotos de recetas localmente</target></trans-unit>
-<trans-unit id="scf023cd4556297e3">
-  <source><x id="0" equiv-text="${this._importResult.imported}"/> recipe<x id="1" equiv-text="${this._importResult.imported !== 1 ? 's' : ''}"/> imported</source>
-<target><x id="0" equiv-text="${this._importResult.imported}"/>receta<x id="1" equiv-text="${this._importResult.imported !== 1 ? 's' : ''}"/>importada(s)</target></trans-unit>
-<trans-unit id="sfdc8508b5a2d671f">
-  <source>with <x id="0" equiv-text="${this._importResult.imagesSaved}"/> photo<x id="1" equiv-text="${this._importResult.imagesSaved !== 1 ? 's' : ''}"/></source>
-<target>con<x id="0" equiv-text="${this._importResult.imagesSaved}"/>foto<x id="1" equiv-text="${this._importResult.imagesSaved !== 1 ? 's' : ''}"/></target></trans-unit>
 <trans-unit id="s210325e7d8ea04c1">
   <source><x id="0" equiv-text="${this._importResult.failed}"/> failed — check HA logs for details</source>
 <target><x id="0" equiv-text="${this._importResult.failed}"/>fallaron — consulta los registros de HA para más detalles</target></trans-unit>
@@ -392,9 +386,6 @@
 <trans-unit id="s0b7b2feae3459936">
   <source>Per <x id="0" equiv-text="${r.servings_text}"/></source>
 <target>Por<x id="0" equiv-text="${r.servings_text}"/></target></trans-unit>
-<trans-unit id="sf8053976d96c5cc0">
-  <source>Per <x id="0" equiv-text="${r.servings}"/> serving<x id="1" equiv-text="${r.servings !== 1 ? 's' : ''}"/></source>
-<target>Por<x id="0" equiv-text="${r.servings}"/>porción<x id="1" equiv-text="${r.servings !== 1 ? 's' : ''}"/></target></trans-unit>
 <trans-unit id="sf647a577e8aceb0f">
   <source>Daily RDA Nutrition</source>
 <target>Nutrición Diaria Recomendada (RDA)</target></trans-unit>
@@ -692,9 +683,6 @@
 <trans-unit id="s3b0ab4b52326316f">
   <source>Light</source>
 <target>Claro</target></trans-unit>
-<trans-unit id="sdb73788b3c975f16">
-  <source>Auto</source>
-<target>Automático</target></trans-unit>
 <trans-unit id="sac895c732f350ac5">
   <source>Dark</source>
 <target>Oscuro</target></trans-unit>
@@ -1067,12 +1055,208 @@
 <trans-unit id="sfb75e276e558684f">
   <source>Keep screen awake</source>
 <target>Mantener pantalla activa</target></trans-unit>
+<trans-unit id="s1b4c5ba66a96b1b7">
+  <source><x id="0" equiv-text="${this._importResult.imported}"/> recipe imported</source>
+        <target><x id="0" equiv-text="${this._importResult.imported}"/> receta importada</target>
+</trans-unit>
+<trans-unit id="sbb5ceabc09e25362">
+  <source><x id="0" equiv-text="${this._importResult.imported}"/> recipes imported</source>
+        <target><x id="0" equiv-text="${this._importResult.imported}"/> recetas importadas</target>
+</trans-unit>
+<trans-unit id="s627f3b19099f96fb">
+  <source>with <x id="0" equiv-text="${this._importResult.imagesSaved}"/> photo</source>
+        <target>con <x id="0" equiv-text="${this._importResult.imagesSaved}"/> foto</target>
+</trans-unit>
+<trans-unit id="sfdc7f38b5a2cc918">
+  <source>with <x id="0" equiv-text="${this._importResult.imagesSaved}"/> photos</source>
+        <target>con <x id="0" equiv-text="${this._importResult.imagesSaved}"/> fotos</target>
+</trans-unit>
+<trans-unit id="saa4cb682564bf8d1">
+  <source>Today · <x id="0" equiv-text="${text}"/></source>
+</trans-unit>
+<trans-unit id="s915f44920ebcd3c7">
+  <source>Day of the week</source>
+</trans-unit>
+<trans-unit id="sa719b0cece5ba8b1">
+  <source>Add another <x id="0" equiv-text="${label}"/></source>
+</trans-unit>
+<trans-unit id="s2fa05f91c1baa29b">
+  <source>Remove <x id="0" equiv-text="${recipe?.name ?? ''}"/></source>
+</trans-unit>
+<trans-unit id="s451a4f6ee98c505e">
+  <source>Per <x id="0" equiv-text="${r.servings}"/> serving</source>
+        <target>Por <x id="0" equiv-text="${r.servings}"/> ración</target>
+</trans-unit>
+<trans-unit id="sf8052676d96c3c77">
+  <source>Per <x id="0" equiv-text="${r.servings}"/> servings</source>
+        <target>Por <x id="0" equiv-text="${r.servings}"/> raciones</target>
+</trans-unit>
+<trans-unit id="s2c6c64dd0de985aa">
+  <source>Tonight</source>
+</trans-unit>
+<trans-unit id="se5c476f2d13bf8fd">
+  <source>Tonight · <x id="0" equiv-text="${day}"/></source>
+</trans-unit>
+<trans-unit id="s23d76c5b4325cf90">
+  <source><x id="0" equiv-text="${n}"/> of 7 dinners planned</source>
+</trans-unit>
+<trans-unit id="s683a238b59491673">
+  <source>serves <x id="0" equiv-text="${recipe.servings}"/></source>
+</trans-unit>
+<trans-unit id="se79945733f4ec748">
+  <source>Nothing planned</source>
+</trans-unit>
+<trans-unit id="sbdf7712f4bb68511">
+  <source>Pick a recipe for tonight</source>
+</trans-unit>
+<trans-unit id="sc8a4f0c8120f0222">
+  <source>Filter and sort</source>
+</trans-unit>
+<trans-unit id="s0379fc73608ab971">
+  <source>Done</source>
+</trans-unit>
+<trans-unit id="s716a6024e3fe999c">
+  <source>Show</source>
+</trans-unit>
+<trans-unit id="sfde9cb616d4fb43b">
+  <source>All recipes</source>
+</trans-unit>
+<trans-unit id="sfe6997d1d2c69018">
+  <source>Course</source>
+</trans-unit>
+<trans-unit id="s079a052719914d71">
+  <source>Category</source>
+</trans-unit>
+<trans-unit id="sa7eea45fe1e4d231">
+  <source>Collection</source>
+</trans-unit>
+<trans-unit id="s3606b9d856cdbafe">
+  <source>Sort by</source>
+</trans-unit>
+<trans-unit id="s95c6a96c9e9547cb">
+  <source>Favourites first</source>
+</trans-unit>
+<trans-unit id="s71f13f810a519aa1">
+  <source>Highest rated</source>
+</trans-unit>
+<trans-unit id="s11306a1c21ee1f84">
+  <source>Quickest</source>
+</trans-unit>
+<trans-unit id="s4c145ca051a8b857">
+  <source>A to Z</source>
+</trans-unit>
+<trans-unit id="scee5b6e70d600380">
+  <source>Minimum rating</source>
+</trans-unit>
+<trans-unit id="s1c9a8520f82a7456">
+  <source>Any rating</source>
+</trans-unit>
+<trans-unit id="s6d94a756fca90432">
+  <source><x id="0" equiv-text="${n}"/> stars and up</source>
+</trans-unit>
+<trans-unit id="sde0081b1dc3582d3">
+  <source>Reset filters</source>
+</trans-unit>
+<trans-unit id="s42fe39f7cbea51f5">
+  <source>Interface style</source>
+</trans-unit>
+<trans-unit id="s0fb2e7b7c4ac022f">
+  <source>Fresh</source>
+</trans-unit>
+<trans-unit id="sf7b4dda36d0ede49">
+  <source>Soft cards, summary card, floating menu</source>
+</trans-unit>
+<trans-unit id="s7c87dc5c593f3de6">
+  <source>Compact</source>
+</trans-unit>
+<trans-unit id="sb5cae3effe3dce90">
+  <source>Dense list, checkboxes, flat tab bar</source>
+</trans-unit>
+<trans-unit id="s98aa8b9481114f33">
+  <source>Classic</source>
+</trans-unit>
+<trans-unit id="s12773021e1d5ec69">
+  <source>The original look and colour themes</source>
+</trans-unit>
+<trans-unit id="sa7f3f605d7bdcd20">
+  <source>Colour mode</source>
+</trans-unit>
+<trans-unit id="sd44968fcd448bc24">
+  <source>Match device</source>
+</trans-unit>
+<trans-unit id="s2492f5fb1b05b45e">
+  <source>Text</source>
+</trans-unit>
+<trans-unit id="s78ef9ec841f7d194">
+  <source>Voice PE / ESPHome timers</source>
+</trans-unit>
+<trans-unit id="s3b09fd557068fd71">
+  <source>Show Voice PE timers</source>
+</trans-unit>
+<trans-unit id="sbbd16f495d2fc075">
+  <source>Lists timers started by voice in the Timers tab</source>
+</trans-unit>
+<trans-unit id="sec99a7fc3c871a15">
+  <source>Sensor prefix</source>
+</trans-unit>
+<trans-unit id="sd7b89e0c988b7387">
+  <source>Template sensors named like sensor.vpe_timer_1</source>
+</trans-unit>
+<trans-unit id="s09ced3129bd49b60">
+  <source>Voice timer</source>
+</trans-unit>
+<trans-unit id="sf623eb0a7cae1cdc">
+  <source>Voice PE</source>
+</trans-unit>
+<trans-unit id="s9c13a2548d254014">
+  <source>Ready</source>
+</trans-unit>
+<trans-unit id="s2744207b97b7ba38">
+  <source>Add one minute</source>
+</trans-unit>
+<trans-unit id="s12d6dde9b30c3093">
+  <source>Dismiss</source>
+</trans-unit>
+<trans-unit id="s1984d7ee02c3605f">
+  <source>Delete timer</source>
+</trans-unit>
+<trans-unit id="s45bebb04b43435a2">
+  <source>Quick timers</source>
+</trans-unit>
+<trans-unit id="s75fd9715dfd3d00a">
+  <source>Remove preset <x id="0" equiv-text="${p.name}"/></source>
+</trans-unit>
+<trans-unit id="safdd8e299f24114b">
+  <source>No timers running</source>
+</trans-unit>
+<trans-unit id="s4c1faaa80304dc70">
+  <source>Start one from a recipe step, a quick timer above, or by voice.</source>
+</trans-unit>
+<trans-unit id="sd3bc998a00b26500">
+  <source>Meadow</source>
+        <target>Prado</target>
+</trans-unit>
+<trans-unit id="s2f3231cd581a8b6e">
+  <source>Slate</source>
+        <target>Pizarra</target>
+</trans-unit>
+<trans-unit id="sd697d9c07465ce87">
+  <source>Sunset</source>
+        <target>Atardecer</target>
+</trans-unit>
+<trans-unit id="s5f4586bc1e2740e6">
+  <source>Clear search</source>
+        <target>Borrar búsqueda</target>
+</trans-unit>
 <trans-unit id="s69d657b5679e13e7">
   <source>Tap again to confirm</source>
-<target>Toca de nuevo para confirmar</target></trans-unit>
+</trans-unit>
 <trans-unit id="sed646a22b012fd7e">
   <source>Save as new amount</source>
-<target>Guardar como nueva cantidad</target></trans-unit>
+</trans-unit>
+<trans-unit id="s095d5c07b5e92011">
+  <source>XL</source>
+</trans-unit>
 </body>
 </file>
 </xliff>

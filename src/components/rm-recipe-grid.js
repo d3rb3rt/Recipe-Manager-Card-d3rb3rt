@@ -3,7 +3,11 @@
  * In wide (tablet/desktop) mode the search bar is hidden (it lives in the sidebar).
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
+import { getLocale } from '../services/localize.js';
+
+const hasAny = (g) => g._filterMode !== 'all' || g._sort !== 'default' || g._sortByRating || g._starFilter > 0
+  || g._selectedCourses.size > 0 || g._selectedCategories.size > 0 || g._selectedCollections.size > 0;
 
 class RmRecipeGrid extends LitElement {
   static properties = {
@@ -18,10 +22,16 @@ class RmRecipeGrid extends LitElement {
     scrollPos:      { type: Number },
     recentRecipes:  { type: Array },
     recentCount:    { type: Number },
+    uiStyle:        { type: String, attribute: 'ui-style', reflect: true },
+    weekPlan:       { type: Array },
+    showPlanner:    { type: Boolean },
+    _collapsed:     { type: Object },
     _filterMode:         { type: String },   // 'all'|'courses'|'categories'|'collections'|'favourites'|'recent'
     _starFilter:         { type: Number },   // 0 = no filter; 1-5 = minimum rating
     _sortByRating:       { type: Boolean },  // sort recipes by rating desc
     _showRatingMenu:     { type: Boolean },  // star filter dropdown open
+    _sort:               { type: String },   // 'default'|'rating'|'time'|'name' (Fresh/Compact sheet)
+    _showSheet:          { type: Boolean },  // filter + sort sheet (Fresh/Compact)
     _selectedCourses:    { type: Object },
     _selectedCategories: { type: Object },
     _selectedCollections:{ type: Object },
@@ -30,6 +40,7 @@ class RmRecipeGrid extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.recipes = [];
     this.allRecipes = [];
     this.tags = [];
@@ -41,10 +52,16 @@ class RmRecipeGrid extends LitElement {
     this.scrollPos = 0;
     this.recentRecipes = [];
     this.recentCount = 12;
+    this.uiStyle = 'classic';
+    this.weekPlan = [];
+    this.showPlanner = true;
+    this._collapsed = {};
     this._filterMode = 'all';
     this._starFilter = 0;
     this._sortByRating = false;
     this._showRatingMenu = false;
+    this._sort = 'default';
+    this._showSheet = false;
     this._selectedCourses = new Set();
     this._selectedCategories = new Set();
     this._selectedCollections = new Set();
@@ -63,6 +80,9 @@ class RmRecipeGrid extends LitElement {
   }
 
   updated(changedProps) {
+    if (changedProps.has('_showSheet')) {
+      this.dispatchEvent(new CustomEvent('rm-overlay', { detail: { open: this._showSheet }, bubbles: true, composed: true }));
+    }
     // Apply filterPreset when it changes (chip navigation from recipe detail)
     if (changedProps.has('filterPreset') && this.filterPreset) {
       const { filterMode, selectedValues } = this.filterPreset;
@@ -182,7 +202,11 @@ class RmRecipeGrid extends LitElement {
     }
 
     if (this._starFilter > 0) base = base.filter(r => (r.rating || 0) >= this._starFilter);
-    if (this._sortByRating) base = [...base].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    if (this._sortByRating || this._sort === 'rating') base = [...base].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (this._sort === 'time') {
+      const t = r => r.total_time || (r.prep_time || 0) + (r.cook_time || 0) || 9999;
+      base = [...base].sort((a, b) => t(a) - t(b));
+    } else if (this._sort === 'name') base = [...base].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     return base;
   }
 
@@ -222,6 +246,103 @@ class RmRecipeGrid extends LitElement {
     return map;
   }
 
+  get _styled() { return this.uiStyle === 'fresh' || this.uiStyle === 'compact'; }
+
+  _todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // "Tonight" hero (Fresh): today's planned dinner, how many dinners are planned this week.
+  _renderHero() {
+    const plan = this.weekPlan || [];
+    const today = this._todayISO();
+    const dinners = new Set(plan.filter(e => e.meal_type === 'dinner').map(e => e.date));
+    const entry = plan.find(e => e.date === today && e.meal_type === 'dinner');
+    const recipe = entry ? this.allRecipes.find(r => r.id === entry.recipe_id) : null;
+    const total = recipe ? (recipe.total_time || (recipe.prep_time || 0) + (recipe.cook_time || 0) || null) : null;
+    const day = new Date().toLocaleDateString(getLocale(), { weekday: 'long' });
+    const n = dinners.size;
+    return html`
+      <section class="hero" aria-label="${msg('Tonight')}">
+        <div class="hero-row">
+          <span class="hero-label">${msg(str`Tonight · ${day}`)}</span>
+          <span class="hero-label">${msg(str`${n} of 7 dinners planned`)}</span>
+        </div>
+        <div class="hero-row">
+          <div class="hero-main">
+            ${recipe ? html`
+              <div class="hero-big">${recipe.name}</div>
+              <div class="hero-sub">${[total ? this._formatTime(total) : null, recipe.servings ? msg(str`serves ${recipe.servings}`) : null].filter(Boolean).join(' · ')}</div>
+            ` : html`
+              <div class="hero-big">${msg('Nothing planned')}</div>
+              <div class="hero-sub">${msg('Pick a recipe for tonight')}</div>
+            `}
+          </div>
+          ${recipe ? html`
+            <button class="hero-cta" @click=${() => this._handleOpenRecipe(recipe)}>
+              <ha-icon icon="mdi:play"></ha-icon>${msg('Cook')}
+            </button>
+          ` : html`
+            <button class="hero-cta" @click=${() => this.dispatchEvent(new CustomEvent('rm-open-planner', { bubbles: true, composed: true }))}>
+              ${msg('Plan')}
+            </button>
+          `}
+        </div>
+        <div class="hero-progress"><i style="width:${Math.round(n / 7 * 100)}%"></i></div>
+      </section>
+    `;
+  }
+
+  _renderRecipeRow(recipe) {
+    const totalTime = recipe.total_time || (recipe.prep_time || 0) + (recipe.cook_time || 0) || null;
+    const course = recipe.courses?.[0] || recipe.category || '';
+    return html`
+      <div class="recipe-row" role="button" tabindex="0"
+        @click=${() => this._handleOpenRecipe(recipe)}
+        @keydown=${e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._handleOpenRecipe(recipe); } }}>
+        <div class="row-thumb">
+          ${recipe.image_url ? html`<img src="${recipe.image_url}" alt="" loading="lazy" />` : html`<ha-icon icon="mdi:food"></ha-icon>`}
+        </div>
+        <div class="row-body">
+          <div class="row-name">${recipe.name}</div>
+          <div class="row-meta">
+            ${[course, totalTime ? this._formatTime(totalTime) : null].filter(Boolean).map((t, i) => html`${i ? html`<span>·</span>` : ''}<span>${t}</span>`)}
+            ${recipe.rating ? html`<span>·</span><span class="row-rating"><ha-icon icon="mdi:star"></ha-icon>${recipe.rating.toFixed ? recipe.rating.toFixed(1) : recipe.rating}</span>` : ''}
+          </div>
+        </div>
+        <button class="row-fav ${recipe.is_favourite ? 'active' : ''}"
+          @click=${(e) => this._handleToggleFavourite(e, recipe)}
+          title="${recipe.is_favourite ? msg('Remove from favourites') : msg('Add to favourites')}"
+          aria-pressed="${recipe.is_favourite ? 'true' : 'false'}">
+          <ha-icon icon="${recipe.is_favourite ? 'mdi:heart' : 'mdi:heart-outline'}"></ha-icon>
+        </button>
+      </div>
+    `;
+  }
+
+  // One titled section: a card grid (Fresh / Classic) or collapsible rows (Compact).
+  _renderSection(key, label, list, gridStyle) {
+    if (this.uiStyle === 'compact' && !label) {
+      return html`<div class="recipe-rows">${list.map(r => this._renderRecipeRow(r))}</div>`;
+    }
+    if (this.uiStyle === 'compact') {
+      const open = !this._collapsed[key];
+      return html`
+        <button class="sec-head" aria-expanded="${open ? 'true' : 'false'}"
+          @click=${() => { this._collapsed = { ...this._collapsed, [key]: open }; }}>
+          <span>${label}</span><span class="sec-count">${list.length}</span>
+          <ha-icon icon="mdi:chevron-down"></ha-icon>
+        </button>
+        ${open ? html`<div class="recipe-rows">${list.map(r => this._renderRecipeRow(r))}</div>` : ''}
+      `;
+    }
+    return html`
+      ${label ? html`<div class="section-label"><span>${label}</span>${this._styled ? html`<span class="sec-count">${list.length}</span>` : ''}</div>` : ''}
+      <div class="recipe-grid" style=${gridStyle}>${list.map(r => this._renderRecipeCard(r))}</div>
+    `;
+  }
+
   _renderStars(rating) {
     const r = rating || 0;
     return html`
@@ -233,6 +354,35 @@ class RmRecipeGrid extends LitElement {
 
   _renderRecipeCard(recipe) {
     const totalTime = recipe.total_time || (recipe.prep_time || 0) + (recipe.cook_time || 0) || null;
+    if (this._styled) {
+      const course = recipe.courses?.[0] || recipe.category || '';
+      return html`
+        <div class="recipe-card" role="button" tabindex="0"
+          @click=${() => this._handleOpenRecipe(recipe)}
+          @keydown=${e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._handleOpenRecipe(recipe); } }}>
+          <div class="recipe-thumb">
+            ${recipe.image_url ? html`<img src="${recipe.image_url}" alt="${recipe.name}" loading="lazy" />` : html`
+              <div class="recipe-thumb-placeholder"><span class="plate"><ha-icon icon="mdi:food"></ha-icon></span></div>
+            `}
+            <button class="fav-btn ${recipe.is_favourite ? 'active' : ''}"
+              @click=${(e) => this._handleToggleFavourite(e, recipe)}
+              title="${recipe.is_favourite ? msg('Remove from favourites') : msg('Add to favourites')}"
+              aria-pressed="${recipe.is_favourite ? 'true' : 'false'}">
+              <span><ha-icon icon="${recipe.is_favourite ? 'mdi:heart' : 'mdi:heart-outline'}"></ha-icon></span>
+            </button>
+          </div>
+          <div class="recipe-info">
+            ${course ? html`<div class="eyebrow">${course}</div>` : ''}
+            <h3 class="recipe-name">${recipe.name}</h3>
+            <div class="recipe-meta">
+              ${totalTime ? html`<span class="meta-chip"><ha-icon icon="mdi:clock-outline"></ha-icon>${this._formatTime(totalTime)}</span>` : ''}
+              ${recipe.servings ? html`<span class="meta-chip"><ha-icon icon="mdi:account-group-outline"></ha-icon>${recipe.servings}</span>` : ''}
+              ${recipe.rating ? html`<span class="meta-chip rating"><ha-icon icon="mdi:star"></ha-icon>${recipe.rating.toFixed ? recipe.rating.toFixed(1) : recipe.rating}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
     return html`
       <div class="recipe-card" @click=${() => this._handleOpenRecipe(recipe)}>
         <div class="recipe-thumb">
@@ -297,11 +447,12 @@ class RmRecipeGrid extends LitElement {
 
   render() {
     const list = this._getFilteredList();
-    const showFavSection = this._filterMode === 'all' && this.showFavourites && !this.activeTag && !this.searchQuery && !this._starFilter && !this._sortByRating;
+    const showFavSection = this._filterMode === 'all' && this.showFavourites && !this.activeTag && !this.searchQuery && !this._starFilter && !this._sortByRating && this._sort === 'default';
     const favourites = showFavSection ? list.filter(r => r.is_favourite) : [];
     const mainList = showFavSection && favourites.length ? list.filter(r => !r.is_favourite) : list;
     const gridStyle = `grid-template-columns: var(--rm-grid-columns, repeat(${this.columns}, minmax(0, 1fr)));`;
-    const hasActiveFilter = this._starFilter > 0 || this._sortByRating;
+    const hasActiveFilter = this._starFilter > 0 || this._sortByRating || this._sort !== 'default';
+    const showHero = this.uiStyle === 'fresh' && this.showPlanner && this._filterMode === 'all' && !this.activeTag && !this.searchQuery && !hasActiveFilter;
 
     return html`
       <div class="grid-container" @click=${() => { if (this._showRatingMenu) this._showRatingMenu = false; }}>
@@ -316,9 +467,10 @@ class RmRecipeGrid extends LitElement {
                 placeholder="${msg('Search recipes…')}"
                 .value=${this.searchQuery}
                 @input=${this._handleSearchInput}
+                @keydown=${e => { if (e.key === 'Escape' && this.searchQuery) this._handleClearSearch(); }}
               />
               ${this.searchQuery ? html`
-                <button class="clear-btn" @click=${this._handleClearSearch}>
+                <button class="clear-btn" title="${msg('Clear search')}" aria-label="${msg('Clear search')}" @click=${this._handleClearSearch}>
                   <ha-icon icon="mdi:close"></ha-icon>
                 </button>
               ` : ''}
@@ -327,7 +479,7 @@ class RmRecipeGrid extends LitElement {
         ` : ''}
 
         <!-- Filter tabs + rating filter button (wide view) -->
-        ${this.hideSidebar ? html`
+        ${this.hideSidebar || this._styled ? html`
           <div class="filter-tabs-row">
             <div class="filter-tabs">
               ${[
@@ -359,19 +511,20 @@ class RmRecipeGrid extends LitElement {
             <div class="rating-filter-wrap">
               <button
                 class="rating-filter-btn ${hasActiveFilter ? 'active' : ''}"
-                @click=${(e) => { e.stopPropagation(); this._showRatingMenu = !this._showRatingMenu; }}
-                title="${msg('Filter/sort by rating')}"
+                @click=${(e) => { e.stopPropagation(); if (this._styled) this._showSheet = true; else this._showRatingMenu = !this._showRatingMenu; }}
+                title="${this._styled ? msg('Filter and sort') : msg('Filter/sort by rating')}"
+                aria-label="${this._styled ? msg('Filter and sort') : msg('Filter/sort by rating')}"
               >
-                <ha-icon icon="mdi:filter-menu-outline"></ha-icon>
+                <ha-icon icon="${this._styled ? 'mdi:tune-variant' : 'mdi:filter-menu-outline'}"></ha-icon>
                 ${hasActiveFilter ? html`<span class="rating-filter-badge"></span>` : ''}
               </button>
-              ${this._showRatingMenu ? this._renderRatingMenu() : ''}
+              ${this._showRatingMenu && !this._styled ? this._renderRatingMenu() : ''}
             </div>
           </div>
         ` : ''}
 
         <!-- Sub-filter chips for Courses / Categories / Collections (multi-select) -->
-        ${this.hideSidebar && this._filterMode === 'courses' && this._allCourses.length ? html`
+        ${(this.hideSidebar || this._styled) && this._filterMode === 'courses' && this._allCourses.length ? html`
           <div class="sub-filter-row">
             <button class="sub-chip ${!this._selectedCourses.size ? 'active' : ''}"
               @click=${() => { this._selectedCourses = new Set(); }}>${msg('All')}</button>
@@ -383,7 +536,7 @@ class RmRecipeGrid extends LitElement {
             `)}
           </div>
         ` : ''}
-        ${this.hideSidebar && this._filterMode === 'categories' && this._allCategories.length ? html`
+        ${(this.hideSidebar || this._styled) && this._filterMode === 'categories' && this._allCategories.length ? html`
           <div class="sub-filter-row">
             <button class="sub-chip ${!this._selectedCategories.size ? 'active' : ''}"
               @click=${() => { this._selectedCategories = new Set(); }}>${msg('All')}</button>
@@ -395,7 +548,7 @@ class RmRecipeGrid extends LitElement {
             `)}
           </div>
         ` : ''}
-        ${this.hideSidebar && this._filterMode === 'collections' && this._allCollections.length ? html`
+        ${(this.hideSidebar || this._styled) && this._filterMode === 'collections' && this._allCollections.length ? html`
           <div class="sub-filter-row">
             <button class="sub-chip ${!this._selectedCollections.size ? 'active' : ''}"
               @click=${() => { this._selectedCollections = new Set(); }}>${msg('All')}</button>
@@ -447,18 +600,84 @@ class RmRecipeGrid extends LitElement {
                       : msg('No recipes yet — add one!')}</p>
             </div>
           ` : html`
-            ${showFavSection && favourites.length ? html`
-              <div class="section-label">${msg('Favourites')}</div>
-              <div class="recipe-grid" style=${gridStyle}>
-                ${favourites.map(r => this._renderRecipeCard(r))}
-              </div>
-              ${mainList.length ? html`<div class="section-label">${msg('All Recipes')}</div>` : ''}
-            ` : ''}
-
-            <div class="recipe-grid" style=${gridStyle}>
-              ${mainList.map(r => this._renderRecipeCard(r))}
-            </div>
+            ${showHero ? this._renderHero() : ''}
+            ${showFavSection && favourites.length
+              ? this._renderSection('fav', msg('Favourites'), favourites, gridStyle) : ''}
+            ${mainList.length
+              ? this._renderSection('all', showFavSection && favourites.length ? msg('All Recipes') : (this._styled && this._filterMode === 'all' ? msg('All Recipes') : ''), mainList, gridStyle)
+              : ''}
           `}
+        </div>
+        ${this._showSheet ? this._renderSheet() : ''}
+      </div>
+    `;
+  }
+
+  // Filter + sort sheet (Fresh / Compact): what to show, sort order, minimum star rating
+  _renderSheet() {
+    const all = this.allRecipes;
+    const favs = all.filter(r => r.is_favourite).length;
+    const show = (mode) => this._filterMode === mode && !this._selectedCourses.size && !this._selectedCategories.size && !this._selectedCollections.size;
+    const setMode = (mode) => {
+      this._filterMode = mode;
+      this._selectedCourses = new Set(); this._selectedCategories = new Set(); this._selectedCollections = new Set();
+    };
+    const pickValue = (type, value) => {
+      setMode(type);
+      const key = type === 'courses' ? '_selectedCourses' : type === 'categories' ? '_selectedCategories' : '_selectedCollections';
+      this[key] = new Set([value]);
+    };
+    const valueGroup = (label, type, values, selected, counts) => values.length ? html`
+      <div class="sheet-label">${label}</div>
+      <div class="sheet-opts">
+        ${values.map(v => html`
+          <button class="sheet-opt" aria-pressed="${selected.has(v) ? 'true' : 'false'}" @click=${() => pickValue(type, v)}>
+            ${v}<span class="so-count">${counts[v] || 0}</span>
+          </button>`)}
+      </div>` : '';
+    const opt = (label, pressed, onClick, extra = '') => html`
+      <button class="sheet-opt" aria-pressed="${pressed ? 'true' : 'false'}" @click=${onClick}>
+        ${label}${extra}${pressed ? html`<ha-icon class="so-ok" icon="mdi:check"></ha-icon>` : ''}
+      </button>`;
+    return html`
+      <div class="sheet-layer ${this.hideSidebar ? 'modal' : ''}" @click=${e => e.stopPropagation()}>
+        <div class="sheet-scrim" @click=${() => { this._showSheet = false; }}></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="${msg('Filter and sort')}">
+          <div class="sheet-grab"></div>
+          <div class="sheet-head">
+            <h2>${msg('Filter and sort')}</h2>
+            <button class="sheet-done" @click=${() => { this._showSheet = false; }}>${msg('Done')}</button>
+          </div>
+
+          <div class="sheet-label">${msg('Show')}</div>
+          <div class="sheet-opts">
+            ${opt(msg('All recipes'), show('all'), () => setMode('all'), html`<span class="so-count">${all.length}</span>`)}
+            ${opt(msg('Favourites'), show('favourites'), () => setMode('favourites'), html`<span class="so-count">${favs}</span>`)}
+            ${opt(msg('Recent'), show('recent'), () => setMode('recent'), html`<span class="so-count">${Math.min(this.recentRecipes.length, this.recentCount)}</span>`)}
+          </div>
+          ${valueGroup(msg('Course'), 'courses', this._allCourses, this._selectedCourses, this._coursecounts)}
+          ${valueGroup(msg('Category'), 'categories', this._allCategories, this._selectedCategories, this._categorycounts)}
+          ${valueGroup(msg('Collection'), 'collections', this._allCollections, this._selectedCollections, this._collectioncounts)}
+
+          <div class="sheet-label">${msg('Sort by')}</div>
+          <div class="sheet-opts">
+            ${[['default', msg('Favourites first')], ['rating', msg('Highest rated')], ['time', msg('Quickest')], ['name', msg('A to Z')]]
+              .map(([v, l]) => opt(l, this._sort === v && !(v === 'default' && this._sortByRating), () => { this._sort = v; this._sortByRating = false; }))}
+          </div>
+
+          <div class="sheet-label">${msg('Minimum rating')}</div>
+          <div class="sheet-opts">
+            ${opt(msg('Any rating'), this._starFilter === 0, () => { this._starFilter = 0; })}
+            ${[5, 4, 3, 2, 1].map(n => html`
+              <button class="sheet-opt" aria-pressed="${this._starFilter === n ? 'true' : 'false'}" @click=${() => { this._starFilter = n; }}
+                aria-label="${msg(str`${n} stars and up`)}">
+                <span class="so-stars" aria-hidden="true">${[1, 2, 3, 4, 5].map(i => html`<ha-icon icon="${i <= n ? 'mdi:star' : 'mdi:star-outline'}"></ha-icon>`)}</span>
+                ${n < 5 ? html`<span class="so-plus">${n}+</span>` : ''}
+                ${this._starFilter === n ? html`<ha-icon class="so-ok" icon="mdi:check"></ha-icon>` : ''}
+              </button>`)}
+          </div>
+
+          ${hasAny(this) ? html`<button class="sheet-reset" @click=${() => { setMode('all'); this._sort = 'default'; this._sortByRating = false; this._starFilter = 0; }}>${msg('Reset filters')}</button>` : ''}
         </div>
       </div>
     `;
@@ -624,7 +843,7 @@ class RmRecipeGrid extends LitElement {
     }
     .sub-chip-count {
       display: inline-flex; align-items: center; justify-content: center;
-      background: var(--rm-accent); color: #fff;
+      background: var(--rm-accent); color: var(--rm-ink, #fff);
       border-radius: 10px; font-size: calc(10px * var(--rm-font-scale, 1)); font-weight: 700;
       padding: 1px 5px; min-width: 16px; line-height: 1.4;
     }
@@ -738,6 +957,221 @@ class RmRecipeGrid extends LitElement {
     }
     .empty-state ha-icon { --mdc-icon-size: 56px; opacity: 0.4; }
     .empty-state p { margin: 0; font-size: calc(15px * var(--rm-font-scale, 1)); }
+
+    /* ═══ Fresh + Compact ═══════════════════════════════════════════ */
+
+    /* Search field: pill */
+    :host([ui-style="fresh"]) .search-row,
+    :host([ui-style="compact"]) .search-row { padding: 12px 20px 0; }
+    :host([ui-style="fresh"]) .search-wrap,
+    :host([ui-style="compact"]) .search-wrap {
+      height: 48px; padding: 0 8px 0 16px; border-radius: 999px;
+      background: var(--rm-bg-surface); border: 1px solid var(--rm-border);
+    }
+    :host([ui-style="compact"]) .search-wrap { border-radius: 14px; border-color: transparent; background: var(--rm-bg-elevated); }
+    :host([ui-style="fresh"]) .search-wrap:focus-within,
+    :host([ui-style="compact"]) .search-wrap:focus-within { outline: 2px solid var(--rm-accent); outline-offset: 1px; }
+    :host([ui-style="fresh"]) .search-input,
+    :host([ui-style="compact"]) .search-input { font-size: calc(15px * var(--rm-font-scale, 1)); padding: 0; }
+    :host([ui-style="fresh"]) .clear-btn,
+    :host([ui-style="compact"]) .clear-btn { width: 36px; height: 36px; justify-content: center; border-radius: 50%; background: var(--rm-bg-elevated); color: var(--rm-text); }
+
+    /* Filter tabs: pill chips */
+    :host([ui-style="fresh"]) .filter-tabs-row,
+    :host([ui-style="compact"]) .filter-tabs-row { border-bottom: none; padding: 14px 20px 0; gap: 8px; }
+    :host([ui-style="fresh"]) .filter-tabs,
+    :host([ui-style="compact"]) .filter-tabs { gap: 8px; }
+    :host([ui-style="fresh"]) .filter-tab,
+    :host([ui-style="compact"]) .filter-tab {
+      min-height: 40px; padding: 0 16px; border-radius: 999px; font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600;
+      border: 1px solid var(--rm-border); background: var(--rm-bg-surface); color: var(--rm-text);
+    }
+    :host([ui-style="compact"]) .filter-tab { border-radius: 12px; }
+    :host([ui-style="fresh"]) .filter-tab ha-icon,
+    :host([ui-style="compact"]) .filter-tab ha-icon { display: none; }
+    :host([ui-style="fresh"]) .filter-tab:hover,
+    :host([ui-style="compact"]) .filter-tab:hover { background: var(--rm-accent-soft); color: var(--rm-accent-text); }
+    :host([ui-style="fresh"]) .filter-tab.active,
+    :host([ui-style="compact"]) .filter-tab.active {
+      background: var(--rm-text); border-color: var(--rm-text); color: var(--rm-bg-main); font-weight: 700;
+    }
+    :host([ui-style="fresh"]) .tab-badge,
+    :host([ui-style="compact"]) .tab-badge { top: 8px; right: 8px; }
+    :host([ui-style="fresh"]) .rating-filter-btn,
+    :host([ui-style="compact"]) .rating-filter-btn {
+      width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 50%;
+      background: var(--rm-bg-surface); color: var(--rm-text);
+    }
+    :host([ui-style="compact"]) .rating-filter-btn { border-radius: 12px; border-color: transparent; background: var(--rm-bg-elevated); }
+    :host([ui-style="fresh"]) .rating-filter-btn.active,
+    :host([ui-style="compact"]) .rating-filter-btn.active { color: var(--rm-accent-text); border-color: var(--rm-accent); background: var(--rm-accent-soft); }
+    :host([ui-style="fresh"]) .rating-menu,
+    :host([ui-style="compact"]) .rating-menu { border-radius: 20px; padding: 8px; box-shadow: var(--rm-shadow-float); }
+    :host([ui-style="fresh"]) .rating-menu-item,
+    :host([ui-style="compact"]) .rating-menu-item { border-radius: 12px; min-height: 40px; }
+    :host([ui-style="fresh"]) .rating-menu-item.active,
+    :host([ui-style="compact"]) .rating-menu-item.active { color: var(--rm-accent-text); background: var(--rm-accent-soft); }
+
+    /* Sub-filter + tag chips */
+    :host([ui-style="fresh"]) .sub-filter-row,
+    :host([ui-style="compact"]) .sub-filter-row { padding: 10px 20px 0; }
+    :host([ui-style="fresh"]) .tags-row,
+    :host([ui-style="compact"]) .tags-row { padding: 10px 20px 0; }
+    :host([ui-style="fresh"]) .sub-chip,
+    :host([ui-style="fresh"]) .tag-btn,
+    :host([ui-style="compact"]) .sub-chip,
+    :host([ui-style="compact"]) .tag-btn {
+      min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600;
+      background: var(--rm-bg-surface); color: var(--rm-text); display: inline-flex; align-items: center;
+    }
+    :host([ui-style="compact"]) .sub-chip, :host([ui-style="compact"]) .tag-btn { border-radius: 12px; }
+    :host([ui-style="fresh"]) .sub-chip, :host([ui-style="compact"]) .sub-chip { padding-right: 8px; }
+    :host([ui-style="fresh"]) .sub-chip.active, :host([ui-style="fresh"]) .tag-btn.active,
+    :host([ui-style="compact"]) .sub-chip.active, :host([ui-style="compact"]) .tag-btn.active {
+      background: var(--rm-accent-soft); border-color: var(--rm-accent); color: var(--rm-accent-text);
+    }
+    :host([ui-style="fresh"]) .sub-chip-count,
+    :host([ui-style="compact"]) .sub-chip-count { color: var(--rm-ink); }
+    :host([ui-style="fresh"]) .active-filter-bar,
+    :host([ui-style="compact"]) .active-filter-bar { margin: 10px 20px 0; padding: 8px 14px; border-radius: 12px; color: var(--rm-accent-text); }
+
+    /* Scroll area + section labels */
+    :host([ui-style="fresh"]) .grid-scroll,
+    :host([ui-style="compact"]) .grid-scroll { padding: 4px 20px 24px; }
+    :host([ui-style="fresh"]) .section-label,
+    :host([ui-style="compact"]) .section-label {
+      display: flex; align-items: center; gap: 8px; margin: 18px 4px 10px;
+      font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.06em; color: var(--rm-text-secondary);
+    }
+    .sec-count { font-weight: 600; }
+
+    /* Hero (Fresh) */
+    .hero {
+      display: grid; gap: 12px; margin: 16px 0 0; padding: 18px 20px;
+      border-radius: 24px; background: var(--rm-accent); color: var(--rm-ink);
+    }
+    .hero-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .hero-label { font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; }
+    .hero-main { min-width: 0; }
+    .hero-big { font-size: calc(26px * var(--rm-font-scale, 1)); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+    .hero-sub { font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; margin-top: 4px; }
+    .hero-cta {
+      flex: none; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 18px 0 14px;
+      border: none; border-radius: 999px; background: var(--rm-ink); color: var(--rm-accent);
+      font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 700; cursor: pointer;
+    }
+    .hero-cta ha-icon { --mdc-icon-size: 18px; }
+    .hero-progress { height: 8px; border-radius: 99px; overflow: hidden; background: color-mix(in srgb, var(--rm-ink) 28%, transparent); }
+    .hero-progress i { display: block; height: 100%; border-radius: 99px; background: var(--rm-ink); }
+
+    /* Cards (Fresh + Compact when the grid is used) */
+    :host([ui-style="fresh"]) .recipe-grid,
+    :host([ui-style="compact"]) .recipe-grid { gap: 14px; margin-bottom: 8px; }
+    :host([ui-style="fresh"]) .recipe-card,
+    :host([ui-style="compact"]) .recipe-card {
+      border-radius: var(--rm-radius-card); box-shadow: none; transform: none;
+    }
+    :host([ui-style="fresh"]) .recipe-card:hover { border-color: var(--rm-accent); box-shadow: none; transform: none; }
+    :host([ui-style="fresh"]) .recipe-card:focus-visible,
+    :host([ui-style="compact"]) .recipe-card:focus-visible,
+    :host([ui-style="compact"]) .recipe-row:focus-visible { outline: 2px solid var(--rm-accent); outline-offset: 2px; }
+    :host([ui-style="fresh"]) .recipe-thumb-placeholder {
+      background: linear-gradient(135deg, var(--rm-accent-soft), var(--rm-bg-elevated));
+    }
+    :host([ui-style="fresh"]) .plate {
+      display: flex; align-items: center; justify-content: center;
+      width: 56%; aspect-ratio: 1; border-radius: 50%;
+      background: var(--rm-bg-surface); color: var(--rm-accent-text);
+      box-shadow: 0 0 0 7px color-mix(in srgb, var(--rm-bg-surface) 45%, transparent);
+    }
+    :host([ui-style="fresh"]) .plate ha-icon { --mdc-icon-size: 32px; }
+    :host([ui-style="fresh"]) .fav-btn {
+      top: 2px; right: 2px; width: 44px; height: 44px; background: none; color: #12201B;
+    }
+    :host([ui-style="fresh"]) .fav-btn > span {
+      width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.94);
+      display: flex; align-items: center; justify-content: center;
+    }
+    :host([ui-style="fresh"]) .fav-btn ha-icon { --mdc-icon-size: 18px; }
+    :host([ui-style="fresh"]) .fav-btn.active { color: #A32B2B; }
+    :host([ui-style="fresh"]) .recipe-info { padding: 12px 14px 14px; display: grid; gap: 6px; }
+    .eyebrow { font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rm-text-secondary); }
+    :host([ui-style="fresh"]) .recipe-name { margin: 0; font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 700; line-height: 1.25; min-height: 2.5em; }
+    :host([ui-style="fresh"]) .recipe-meta { flex-wrap: nowrap; gap: 10px; align-items: center; }
+    :host([ui-style="fresh"]) .meta-chip {
+      background: none; padding: 0; border-radius: 0; font-size: calc(12.5px * var(--rm-font-scale, 1)); font-weight: 500; gap: 4px; white-space: nowrap;
+    }
+    :host([ui-style="fresh"]) .meta-chip ha-icon { --mdc-icon-size: 15px; }
+    :host([ui-style="fresh"]) .meta-chip.rating { margin-left: auto; color: var(--rm-warn); font-weight: 700; }
+
+    /* Rows (Compact) */
+    :host([ui-style="compact"]) .sec-head {
+      display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px;
+      margin-top: 8px; padding: 10px 4px 4px; border: none; background: transparent; text-align: left;
+      font: inherit; font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--rm-text-secondary); cursor: pointer;
+    }
+    :host([ui-style="compact"]) .sec-head .sec-count { flex: 1; }
+    :host([ui-style="compact"]) .sec-head ha-icon { --mdc-icon-size: 18px; transition: transform 0.15s; }
+    :host([ui-style="compact"]) .sec-head[aria-expanded="false"] ha-icon { transform: rotate(-90deg); }
+    .recipe-rows { display: block; }
+    .recipe-row {
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid var(--rm-line); cursor: pointer;
+    }
+    .recipe-row:last-child { border-bottom: none; }
+    .row-thumb {
+      flex: none; width: 56px; height: 56px; border-radius: 14px; overflow: hidden;
+      background: linear-gradient(135deg, var(--rm-accent-soft), var(--rm-bg-elevated));
+      display: flex; align-items: center; justify-content: center; color: var(--rm-accent-text);
+    }
+    .row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .row-thumb ha-icon { --mdc-icon-size: 26px; }
+    .row-body { flex: 1; min-width: 0; }
+    .row-name { font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: calc(12.5px * var(--rm-font-scale, 1)); font-weight: 500; color: var(--rm-text-secondary); white-space: nowrap; }
+    .row-rating { display: inline-flex; align-items: center; gap: 2px; color: var(--rm-warn); font-weight: 700; }
+    .row-rating ha-icon { --mdc-icon-size: 14px; }
+    .row-fav {
+      flex: none; width: 44px; height: 44px; padding: 0; border: none; background: transparent;
+      color: var(--rm-text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .row-fav.active { color: var(--rm-danger); }
+    :host([ui-style="compact"]) .empty-state ha-icon,
+    :host([ui-style="fresh"]) .empty-state ha-icon { color: var(--rm-accent-text); opacity: 0.6; }
+
+    /* ── Filter + sort sheet ── */
+    .sheet-layer { position: absolute; inset: 0; z-index: 300; }
+    .sheet-scrim { position: absolute; inset: 0; background: rgba(10,16,13,0.5); }
+    .sheet {
+      position: absolute; left: 0; right: 0; bottom: 0; max-height: 90%; overflow-y: auto; box-sizing: border-box;
+      padding: 10px 20px 28px; border-radius: 32px 32px 0 0; background: var(--rm-bg-main); color: var(--rm-text);
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.22);
+    }
+    .sheet-layer.modal .sheet { left: 50%; right: auto; bottom: auto; top: 50%; transform: translate(-50%, -50%); width: min(480px, 92%); max-height: 86%; border-radius: 28px; }
+    .sheet-grab { width: 40px; height: 5px; border-radius: 99px; margin: 0 auto 8px; background: var(--rm-border); }
+    .sheet-layer.modal .sheet-grab { display: none; }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px 6px; }
+    .sheet-head h2 { margin: 0; font-size: calc(22px * var(--rm-font-scale, 1)); font-weight: 800; letter-spacing: -0.02em; }
+    .sheet-done { flex: none; min-height: 44px; padding: 0 20px; border: none; border-radius: 999px; background: var(--rm-accent); color: var(--rm-ink, #fff); font-weight: 700; font-size: calc(14px * var(--rm-font-scale, 1)); cursor: pointer; }
+    .sheet-label { padding: 14px 4px 6px; font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--rm-text-secondary); }
+    .sheet-opts { border-radius: 22px; border: 1px solid var(--rm-border); background: var(--rm-bg-surface); padding: 0 14px; }
+    :host([ui-style="compact"]) .sheet-opts { border-color: transparent; border-radius: 18px; }
+    .sheet-opt {
+      display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0;
+      border: none; border-bottom: 1px solid var(--rm-line); background: transparent; text-align: left;
+      font: inherit; font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text); cursor: pointer;
+    }
+    .sheet-opts > .sheet-opt:last-child { border-bottom: none; }
+    .sheet-opt[aria-pressed="true"] { color: var(--rm-accent-text); font-weight: 700; }
+    .sheet-opt:focus-visible, .sheet-done:focus-visible, .sheet-reset:focus-visible { outline: 2px solid var(--rm-accent); outline-offset: 2px; }
+    .so-count { margin-left: auto; font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text-secondary); }
+    .so-ok { margin-left: auto; --mdc-icon-size: 20px; color: var(--rm-accent-text); }
+    .so-count + .so-ok { margin-left: 8px; }
+    .so-stars { display: inline-flex; color: var(--rm-warn); }
+    .so-stars ha-icon { --mdc-icon-size: 20px; }
+    .so-plus { font-size: calc(13px * var(--rm-font-scale, 1)); font-weight: 700; color: var(--rm-text-secondary); }
+    .sheet-reset { display: block; width: 100%; margin-top: 16px; min-height: 48px; border: 1px solid var(--rm-border); border-radius: 999px; background: var(--rm-bg-surface); color: var(--rm-text); font: inherit; font-weight: 700; cursor: pointer; }
   `;
 }
 

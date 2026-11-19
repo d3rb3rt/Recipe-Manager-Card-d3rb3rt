@@ -2,17 +2,19 @@
  * Weekly meal planner view.
  */
 import { LitElement, html, css } from 'lit';
-import { msg, str } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 class RmMealPlanner extends LitElement {
   static properties = {
+    uiStyle: { type: String, attribute: 'ui-style', reflect: true },
     api: { type: Object },
     recipes: { type: Array },
     settings: { type: Object },
     fromRecipe: { type: Object },    // recipe to return to (set when navigated from recipe detail)
     _weekStart: { type: String },    // ISO date string YYYY-MM-DD (Monday)
+    _selectedDate: { type: String }, // day shown in the Fresh / Compact day view
     _plan: { type: Array },          // MealPlanEntry[]
     _loading: { type: Boolean },
     _showPicker: { type: Boolean },  // show recipe picker modal
@@ -23,6 +25,7 @@ class RmMealPlanner extends LitElement {
 
   constructor() {
     super();
+    updateWhenLocaleChanges(this); // re-render when the language file finishes loading
     this.api = null;
     this.recipes = [];
     this.settings = {};
@@ -34,9 +37,13 @@ class RmMealPlanner extends LitElement {
     this._pickerSearch = '';
     this._pickerServings = 2;
     this._weekStart = this._getMondayISO(new Date());
+    this._selectedDate = this._todayISO();
   }
 
   updated(changedProps) {
+    if (changedProps.has('_showPicker')) {
+      this.dispatchEvent(new CustomEvent('rm-overlay', { detail: { open: this._showPicker }, bubbles: true, composed: true }));
+    }
     if ((changedProps.has('api') || changedProps.has('_weekStart')) && this.api) {
       this._loadPlan();
     }
@@ -75,12 +82,49 @@ class RmMealPlanner extends LitElement {
     return d.toLocaleDateString(this.settings?.language || 'en', { weekday: 'short', timeZone: 'UTC' });
   }
 
+  get _styled() { return this.uiStyle === 'fresh' || this.uiStyle === 'compact'; }
+
+  // Local calendar date (toISOString would shift the day for users east/west of UTC)
+  _todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  _setWeek(weekStart) {
+    this._weekStart = weekStart;
+    const today = this._todayISO();
+    const inWeek = today >= weekStart && today <= this._addDays(weekStart, 6);
+    this._selectedDate = inWeek ? today : weekStart;
+  }
+
   _prevWeek() {
-    this._weekStart = this._addDays(this._weekStart, -7);
+    this._setWeek(this._addDays(this._weekStart, -7));
   }
 
   _nextWeek() {
-    this._weekStart = this._addDays(this._weekStart, 7);
+    this._setWeek(this._addDays(this._weekStart, 7));
+  }
+
+  _formatLongDay(isoDate) {
+    const d = new Date(isoDate + 'T00:00:00Z');
+    const text = d.toLocaleDateString(this.settings?.language || 'en', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' });
+    return isoDate === this._todayISO() ? msg(str`Today · ${text}`) : text;
+  }
+
+  _mealIcon(mealType) {
+    return { breakfast: 'mdi:weather-sunny', lunch: 'mdi:silverware-fork-knife', dinner: 'mdi:weather-night', snack: 'mdi:coffee-outline' }[mealType] || 'mdi:food';
+  }
+
+  // Each meal has its own colour (same as the Shopping List Manager hues)
+  _mealHue(mealType) {
+    return { breakfast: '--rm-h3', lunch: '--rm-h2', dinner: '--rm-h4', snack: '--rm-h6' }[mealType] || '--rm-accent';
+  }
+
+  _formatMinutes(m) {
+    if (!m) return '';
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60), r = m % 60;
+    return r ? `${h} h ${r} min` : `${h} h`;
   }
 
   _isCurrentWeek() {
@@ -163,7 +207,7 @@ class RmMealPlanner extends LitElement {
 
   render() {
     const days = Array.from({ length: 7 }, (_, i) => this._addDays(this._weekStart, i));
-    const today = new Date().toISOString().split('T')[0];
+    const today = this._todayISO();
 
     return html`
       <div class="planner-container">
@@ -183,7 +227,7 @@ class RmMealPlanner extends LitElement {
           <div class="week-label">
             <span class="week-month">${this._formatMonthYear(this._weekStart)}</span>
             ${this._isCurrentWeek() ? html`<span class="today-badge">${msg('This week')}</span>` : html`
-              <button class="text-link" @click=${() => { this._weekStart = this._getMondayISO(new Date()); }}>${msg('Today')}</button>
+              <button class="text-link" @click=${() => { this._setWeek(this._getMondayISO(new Date())); }}>${msg('Today')}</button>
             `}
           </div>
           <button class="nav-btn" @click=${this._nextWeek}>
@@ -191,8 +235,10 @@ class RmMealPlanner extends LitElement {
           </button>
         </div>
 
+        ${this._styled ? this._renderDayView(days, today) : ''}
+
         <!-- Day headers -->
-        <div class="day-headers">
+        <div class="day-headers" ?hidden=${this._styled}>
           ${days.map(date => html`
             <div class="day-header ${date === today ? 'today' : ''}">
               <span class="day-name">${this._formatDayName(date)}</span>
@@ -201,8 +247,8 @@ class RmMealPlanner extends LitElement {
           `)}
         </div>
 
-        <!-- Plan grid scroll -->
-        <div class="plan-scroll">
+        <!-- Plan grid scroll (Classic week matrix) -->
+        <div class="plan-scroll" ?hidden=${this._styled}>
           ${this._loading ? html`
             <div class="plan-loading"><ha-circular-progress active></ha-circular-progress></div>
           ` : html`
@@ -264,6 +310,99 @@ class RmMealPlanner extends LitElement {
     `;
   }
 
+  // Fresh / Compact: pick a day, then see its meals as one rounded card.
+  _renderDayView(days, today) {
+    const idx = Math.max(0, days.indexOf(this._selectedDate));
+    const shown = [days[idx], days[idx + 1]].filter(Boolean);
+    return html`
+      <div class="day-chips" role="group" aria-label="${msg('Day of the week')}">
+        ${days.map(date => {
+          const planned = this._plan.some(e => e.date === date);
+          return html`
+            <button class="day-chip" aria-pressed="${date === this._selectedDate ? 'true' : 'false'}"
+              aria-current="${date === today ? 'date' : 'false'}"
+              @click=${() => { this._selectedDate = date; }}>
+              <span class="dc-name">${this._formatDayName(date)}</span>
+              <span class="dc-num">${this._formatDisplayDate(date)}</span>
+              <span class="dc-dot ${planned ? '' : 'empty'}"></span>
+            </button>
+          `;
+        })}
+      </div>
+      ${this._loading ? html`<div class="plan-loading"><ha-circular-progress active></ha-circular-progress></div>` : html`
+        <div class="day-scroll">
+          <div class="day-groups">
+            ${shown.map((date, i) => html`
+              <section class="day-group">
+                <div class="day-title"><span class="dt-dot ${i ? 'alt' : ''}"></span>${this._formatLongDay(date)}</div>
+                <div class="day-card">
+                  ${MEAL_TYPES.map(mealType => this._renderSlot(date, mealType))}
+                </div>
+              </section>
+            `)}
+          </div>
+          ${this._plan.length ? html`
+            <div class="clear-row">
+              <button class="text-danger-btn" @click=${this._handleClearWeek}>
+                <ha-icon icon="mdi:calendar-remove-outline"></ha-icon>
+                ${msg('Clear this week')}
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `}
+    `;
+  }
+
+  _renderSlot(date, mealType) {
+    const entries = this._getEntriesForSlot(date, mealType);
+    const label = this._mealTypeLabel(mealType);
+    if (!entries.length) {
+      return html`
+        <div class="slot">
+          <span class="slot-tile" style="--hue: var(${this._mealHue(mealType)})"><ha-icon icon="${this._mealIcon(mealType)}"></ha-icon></span>
+          <div class="slot-mid">
+            <div class="slot-eyebrow">${label}</div>
+            <div class="slot-name muted">${msg('Nothing planned')}</div>
+          </div>
+          <button class="slot-btn add" @click=${() => this._openPicker(date, mealType)}
+            title="${msg(str`Add ${label}`)}" aria-label="${msg(str`Add ${label}`)}">
+            <span><ha-icon icon="mdi:plus"></ha-icon></span>
+          </button>
+        </div>
+      `;
+    }
+    return html`${entries.map((entry, i) => {
+      const recipe = this.recipes.find(r => r.id === entry.recipe_id);
+      const total = recipe ? (recipe.total_time || (recipe.prep_time || 0) + (recipe.cook_time || 0) || 0) : 0;
+      const sub = [total ? this._formatMinutes(total) : '', entry.servings ? msg(str`serves ${entry.servings}`) : ''].filter(Boolean).join(' · ');
+      return html`
+        <div class="slot">
+          <button class="slot-open" @click=${() => this._openRecipeDetail(entry)}>
+            <span class="slot-thumb ${recipe?.image_url ? '' : 'no-img'}" style="--hue: var(${this._mealHue(mealType)})">
+              ${recipe?.image_url ? html`<img src="${recipe.image_url}" alt="" />` : html`<ha-icon icon="${this._mealIcon(mealType)}"></ha-icon>`}
+            </span>
+            <span class="slot-mid">
+              <span class="slot-eyebrow">${i === 0 ? label : ''}</span>
+              <span class="slot-name">${recipe?.name ?? msg('Unknown')}</span>
+              ${sub ? html`<span class="slot-sub">${sub}</span>` : ''}
+            </span>
+          </button>
+          ${i === entries.length - 1 ? html`
+            <button class="slot-btn" @click=${() => this._openPicker(date, mealType)}
+              title="${msg(str`Add another ${label}`)}" aria-label="${msg(str`Add another ${label}`)}">
+              <ha-icon icon="mdi:plus"></ha-icon>
+            </button>
+          ` : ''}
+          <button class="slot-btn" @click=${() => this._handleRemoveEntry(entry.id)}
+            title="${msg('Remove')}" aria-label="${msg(str`Remove ${recipe?.name ?? ''}`)}">
+            <ha-icon icon="mdi:close"></ha-icon>
+          </button>
+        </div>
+      `;
+    })}`;
+  }
+
   _renderPicker() {
     const target = this._pickerTarget;
     return html`
@@ -293,7 +432,14 @@ class RmMealPlanner extends LitElement {
               placeholder="${msg('Search recipes…')}"
               .value=${this._pickerSearch}
               @input=${e => { this._pickerSearch = e.target.value; }}
+              @keydown=${e => { if (e.key === 'Escape' && this._pickerSearch) { e.stopPropagation(); this._pickerSearch = ''; } }}
             />
+            ${this._pickerSearch ? html`
+              <button class="picker-search-clear" title="${msg('Clear search')}" aria-label="${msg('Clear search')}"
+                @click=${() => { this._pickerSearch = ''; }}>
+                <ha-icon icon="mdi:close"></ha-icon>
+              </button>
+            ` : ''}
           </div>
           <div class="picker-list">
             ${this._pickerFiltered.length === 0 ? html`
@@ -398,7 +544,7 @@ class RmMealPlanner extends LitElement {
     .day-num { font-size: calc(14px * var(--rm-font-scale, 1)); font-weight: 600; color: var(--rm-text, #e5e5ea); }
     .day-header.today .day-num {
       background: var(--rm-accent, #ff6b35);
-      color: #fff;
+      color: var(--rm-ink, #fff);
       width: 24px;
       height: 24px;
       border-radius: 50%;
@@ -660,6 +806,125 @@ class RmMealPlanner extends LitElement {
     .picker-tags { font-size: calc(12px * var(--rm-font-scale, 1)); color: var(--rm-text-secondary, #8e8e93); }
     .picker-fav { color: var(--error-color, #cf6679); --mdc-icon-size: 16px; }
     .picker-empty { padding: 30px; text-align: center; color: var(--rm-text-secondary, #8e8e93); font-size: calc(14px * var(--rm-font-scale, 1)); }
+
+    /* ═══ Fresh + Compact ═══ */
+    :host([ui-style="fresh"]) .week-nav,
+    :host([ui-style="compact"]) .week-nav { border-bottom: none; padding: 16px 20px 4px; }
+    :host([ui-style="fresh"]) .nav-btn,
+    :host([ui-style="compact"]) .nav-btn {
+      width: 44px; height: 44px; border: 1px solid var(--rm-border); background: var(--rm-bg-surface); color: var(--rm-text);
+    }
+    :host([ui-style="compact"]) .nav-btn { border-radius: 14px; border-color: transparent; background: var(--rm-bg-elevated); }
+    :host([ui-style="fresh"]) .week-label,
+    :host([ui-style="compact"]) .week-label { font-size: calc(17px * var(--rm-font-scale, 1)); font-weight: 800; letter-spacing: -0.01em; }
+    :host([ui-style="fresh"]) .today-badge,
+    :host([ui-style="compact"]) .today-badge { background: var(--rm-accent-soft); color: var(--rm-accent-text); font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    :host([ui-style="fresh"]) .text-link,
+    :host([ui-style="compact"]) .text-link { color: var(--rm-accent-text); font-weight: 700; min-height: 32px; }
+    :host([ui-style="fresh"]) .day-headers,
+    :host([ui-style="compact"]) .day-headers { padding: 10px 16px 6px; gap: 3px; }
+    :host([ui-style="fresh"]) .day-name,
+    :host([ui-style="compact"]) .day-name { font-weight: 700; }
+    :host([ui-style="fresh"]) .day-num,
+    :host([ui-style="compact"]) .day-num { font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 800; }
+    :host([ui-style="fresh"]) .day-header.today .day-num,
+    :host([ui-style="compact"]) .day-header.today .day-num { width: 28px; height: 28px; font-size: calc(13px * var(--rm-font-scale, 1)); }
+    :host([ui-style="fresh"]) .plan-scroll,
+    :host([ui-style="compact"]) .plan-scroll { padding: 4px 16px 24px; }
+    :host([ui-style="fresh"]) .meal-label,
+    :host([ui-style="compact"]) .meal-label { font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.06em; padding: 12px 4px 6px; }
+    :host([ui-style="fresh"]) .meal-cell,
+    :host([ui-style="compact"]) .meal-cell {
+      border-radius: 12px; padding: 4px; background: var(--rm-bg-surface); border: 1px solid var(--rm-border);
+    }
+    :host([ui-style="compact"]) .meal-cell { border-color: transparent; }
+    :host([ui-style="fresh"]) .meal-cell.today,
+    :host([ui-style="compact"]) .meal-cell.today { border-color: var(--rm-accent); }
+    :host([ui-style="fresh"]) .meal-entry,
+    :host([ui-style="compact"]) .meal-entry { background: var(--rm-accent-soft); color: var(--rm-accent-text); border-radius: 8px; font-weight: 600; }
+    :host([ui-style="fresh"]) .entry-servings,
+    :host([ui-style="compact"]) .entry-servings { color: var(--rm-accent-text); opacity: 0.8; }
+    :host([ui-style="fresh"]) .add-slot-btn,
+    :host([ui-style="compact"]) .add-slot-btn { border-radius: 8px; height: 22px; }
+    :host([ui-style="fresh"]) .picker-panel,
+    :host([ui-style="compact"]) .picker-panel { border-radius: 28px 28px 0 0; background: var(--rm-bg-main); box-shadow: 0 -10px 40px rgba(0,0,0,0.22); }
+    :host([ui-style="fresh"]) .picker-header,
+    :host([ui-style="compact"]) .picker-header { border-bottom: none; padding: 18px 20px 8px; font-size: calc(20px * var(--rm-font-scale, 1)); font-weight: 800; letter-spacing: -0.01em; }
+    :host([ui-style="fresh"]) .picker-item,
+    :host([ui-style="compact"]) .picker-item { padding: 10px 20px; border-bottom-color: var(--rm-line); }
+    :host([ui-style="fresh"]) .picker-thumb,
+    :host([ui-style="compact"]) .picker-thumb { border-radius: 14px; }
+    :host([ui-style="fresh"]) .picker-search-wrap,
+    :host([ui-style="compact"]) .picker-search-wrap { margin: 4px 16px 8px; padding: 0 14px; min-height: 44px; border: 1px solid var(--rm-border); border-radius: 999px; background: var(--rm-bg-surface); }
+    :host([ui-style="fresh"]) .scaler-btn,
+    :host([ui-style="compact"]) .scaler-btn { width: 36px; height: 36px; }
+
+    /* ── Day view (Fresh + Compact) ── */
+    [hidden] { display: none !important; }
+    .day-chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; padding: 14px 16px 0; flex-shrink: 0; }
+    .day-chip {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      min-height: 64px; padding: 8px 0; border-radius: 18px; cursor: pointer;
+      border: 1px solid var(--rm-border); background: var(--rm-bg-surface); color: var(--rm-text);
+    }
+    :host([ui-style="compact"]) .day-chip { border-radius: 14px; border-color: transparent; }
+    .dc-name { font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--rm-text-secondary); }
+    .dc-num { font-size: calc(17px * var(--rm-font-scale, 1)); font-weight: 800; font-variant-numeric: tabular-nums; }
+    .dc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rm-accent); margin-top: 2px; }
+    .dc-dot.empty { background: transparent; }
+    .day-chip[aria-current="date"] .dc-num { color: var(--rm-accent-text); }
+    .day-chip[aria-pressed="true"] { background: var(--rm-text); border-color: var(--rm-text); color: var(--rm-bg-main); }
+    .day-chip[aria-pressed="true"] .dc-name { color: var(--rm-bg-main); opacity: 0.8; }
+    .day-chip[aria-pressed="true"] .dc-num { color: var(--rm-bg-main); }
+    .day-chip[aria-pressed="true"] .dc-dot { background: var(--rm-bg-main); }
+    .day-chip:focus-visible, .slot-btn:focus-visible, .slot-open:focus-visible { outline: 2px solid var(--rm-accent); outline-offset: 2px; }
+
+    .day-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 0 24px; scrollbar-width: thin; scrollbar-color: var(--rm-border) transparent; }
+    .day-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 20px; }
+    @container (min-width: 680px) { .day-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .planner-container { container-type: inline-size; }
+    .day-title {
+      display: flex; align-items: center; gap: 8px; padding: 18px 24px 8px;
+      font-size: calc(12px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rm-text-secondary);
+    }
+    .dt-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rm-accent); flex: none; }
+    .dt-dot.alt { background: var(--rm-warn); }
+    .day-card { margin: 0 16px; padding: 2px 14px; border-radius: var(--rm-radius-card); border: 1px solid var(--rm-border); background: var(--rm-bg-surface); }
+    :host([ui-style="compact"]) .day-card { border-color: transparent; padding: 0 14px; }
+    .slot { display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 10px 0; border-bottom: 1px solid var(--rm-line); }
+    .slot:last-child { border-bottom: none; }
+    .slot-tile, .slot-thumb {
+      flex: none; width: 44px; height: 44px; border-radius: 14px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--hue, var(--rm-accent)) 18%, var(--rm-bg-surface)); color: var(--hue, var(--rm-accent-text));
+    }
+    :host([ui-style="compact"]) .slot-tile, :host([ui-style="compact"]) .slot-thumb.no-img { width: 40px; height: 40px; border-radius: 12px; background: var(--hue, var(--rm-accent)); color: var(--rm-bg-main); }
+    .slot-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .slot-tile ha-icon, .slot-thumb ha-icon { --mdc-icon-size: 22px; }
+    .slot-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0; border: none; background: transparent; text-align: left; cursor: pointer; color: var(--rm-text); font: inherit; }
+    .slot-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .slot-eyebrow { font-size: calc(11px * var(--rm-font-scale, 1)); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rm-text-secondary); min-height: 1em; }
+    .slot-name { font-size: calc(15px * var(--rm-font-scale, 1)); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--rm-text); }
+    .slot-name.muted { font-weight: 500; color: var(--rm-text-secondary); }
+    .slot-sub { font-size: calc(12.5px * var(--rm-font-scale, 1)); font-weight: 500; color: var(--rm-text-secondary); }
+    .slot-btn {
+      flex: none; width: 44px; height: 44px; padding: 0; border: none; background: transparent; cursor: pointer;
+      color: var(--rm-text-secondary); display: flex; align-items: center; justify-content: center;
+    }
+    .slot-btn:hover { color: var(--rm-text); }
+    .slot-btn ha-icon { --mdc-icon-size: 20px; }
+    .slot-btn.add span { width: 36px; height: 36px; border-radius: 50%; background: var(--rm-accent-soft); color: var(--rm-accent-text); display: flex; align-items: center; justify-content: center; }
+    .slot-btn.add ha-icon { --mdc-icon-size: 18px; }
+
+    .picker-search { min-width: 0; }
+    .picker-search-clear {
+      flex: none; width: 32px; height: 32px; padding: 0; border: none; border-radius: 50%; cursor: pointer;
+      background: var(--rm-bg-elevated, rgba(128,128,128,0.15)); color: var(--rm-text, inherit);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .picker-search-clear:hover { background: var(--rm-accent-soft); color: var(--rm-accent-text, var(--rm-accent)); }
+    .picker-search-clear:focus-visible { outline: 2px solid var(--rm-accent); outline-offset: 2px; }
+    .picker-search-clear ha-icon { --mdc-icon-size: 16px; }
   `;
 }
 
